@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="uk">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>BiG Dnipro - Login</title>
+    <link rel="stylesheet" href="/ui.css" />
+    <style>
+      .authWrap{max-width:560px;margin:0 auto}
+      .authCard{max-width:560px;margin:0 auto;padding:28px 24px;border-radius:28px;background:linear-gradient(180deg,rgba(8,20,38,0.82),rgba(5,14,28,0.92));
+        border:1px solid rgba(116,198,255,0.28);box-shadow:inset 0 0 0 1px rgba(255,255,255,0.02),inset 0 0 26px rgba(40,167,255,0.05),0 18px 46px rgba(0,0,0,0.4),0 0 18px rgba(40,167,255,0.08)}
+      .formRow{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+      .field label{display:block;margin-bottom:10px;font-size:13px;font-weight:700;color:#fff;letter-spacing:.2px;text-transform:uppercase}
+      .field input{width:100%;background:linear-gradient(180deg,rgba(9,22,43,0.92),rgba(6,16,31,0.96));border:1px solid rgba(126,213,255,0.2);
+        color:#fff;border-radius:16px;padding:14px 16px;font-size:15px;outline:none;transition:border-color .2s,box-shadow .2s,background .2s}
+      .field input:focus{border-color:var(--border-hover);box-shadow:0 0 0 3px rgba(74,120,212,0.12),0 0 22px rgba(30,144,255,0.12)}
+      .actions{display:flex;justify-content:flex-end;margin-top:18px}
+      .button{min-width:220px;border:none;border-radius:16px;padding:14px 22px;font-size:16px;font-weight:900;cursor:pointer;color:#fff;
+        background:linear-gradient(180deg,rgba(40,167,255,0.98),rgba(20,102,214,0.96));
+        box-shadow:0 14px 30px rgba(30,99,230,0.25),0 0 22px rgba(62,151,255,0.22),inset 0 1px 0 rgba(255,255,255,0.18)}
+      .hint{margin-top:10px;font-size:12px;color:var(--muted);line-height:1.5;text-align:center;text-transform:uppercase;letter-spacing:.5px}
+      .err{margin-top:14px;color:#ff8080;font-size:14px;white-space:pre-wrap;text-align:center;display:none}
+      @media(max-width:760px){.formRow{grid-template-columns:1fr}.actions{justify-content:stretch}.button{width:100%;min-width:0}}
+    </style>
+  </head>
+  <body>
+    <div id="stars"></div>
+    <div id="particles"></div>
+
+    <div class="page">
+      <div class="shell">
+        <nav class="top-nav">
+          <a class="brand" href="/">
+            <img src="https://raw.githubusercontent.com/bogdanharpoonn-eng/Foto-logo/main/big_dnipro_logo_final.png" alt="BiG Dnipro Logo"
+              onerror="this.onerror=null;this.src='https://cdn.jsdelivr.net/gh/bogdanharpoonn-eng/Foto-logo@main/big_dnipro_logo_final.png';"/>
+            <span class="brand-text">
+              <span class="brand-title">BiG Dnipro</span>
+              <span class="brand-subtitle">Automation Control Panel</span>
+            </span>
+          </a>
+          <div class="nav-links">
+            <a class="active" href="/">Головна</a>
+            <a href="/candidate">Анкета кандидата</a>
+            <a href="/dashboard">Кандидати</a>
+            <a href="/dashboard">КПІ</a>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="status-pill"><div class="status-dot"></div>Система активна</div>
+            <div class="nav-clock">
+              <div class="nav-clock-time" id="clock">--:--:--</div>
+              <div class="nav-clock-date" id="clock-date">—</div>
+            </div>
+          </div>
+        </nav>
+
+        <section class="hero">
+          <div class="core-wrap" aria-hidden="true">
+            <div class="core-eye"><div class="outer"></div><div class="mid"></div></div>
+          </div>
+          <div class="hero-content">
+            <div class="eyebrow">Recruitment Automation Workspace</div>
+            <h1 class="title">Вхід в систему</h1>
+            <p class="subtitle">Авторизуйся, щоб перейти до бази кандидатів та панелі додавання.</p>
+          </div>
+        </section>
+
+        <div class="authWrap">
+          <div class="authCard">
+            <form id="loginForm">
+              <div class="formRow">
+                <div class="field">
+                  <label for="email">Email</label>
+                  <input id="email" name="email" type="email" autocomplete="email" required />
+                </div>
+                <div class="field">
+                  <label for="password">Password</label>
+                  <input id="password" name="password" type="password" autocomplete="current-password" required minlength="6" />
+                </div>
+              </div>
+              <div class="actions">
+                <button class="button" type="submit">Увійти</button>
+              </div>
+              <div class="hint">Тестовий вхід: admin@example.com / admin123</div>
+              <div id="err" class="err"></div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="/ui.js"></script>
+    <script src="/app.js"></script>
+    <script>
+      window.UI?.initStarsAndParticles();
+      window.UI?.initClock();
+    </script>
+  </body>
+</html>
+

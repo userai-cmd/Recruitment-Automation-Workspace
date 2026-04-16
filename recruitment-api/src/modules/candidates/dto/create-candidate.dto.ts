@@ -2,10 +2,10 @@ import { IsEmail, IsOptional, IsString, IsUUID } from 'class-validator';
 
 export class CreateCandidateDto {
   @IsString()
-  fullName: string;
+  fullName!: string;
 
   @IsString()
-  phone: string;
+  phone!: string;
 
   @IsOptional()
   @IsEmail()
@@ -24,7 +24,7 @@ export class CreateCandidateDto {
   vacancyId?: string;
 
   @IsUUID()
-  assignedRecruiterId: string;
+  assignedRecruiterId!: string;
 
   @IsOptional()
   @IsString()
