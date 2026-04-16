@@ -1,0 +1,154 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  admin
+  recruiter
+}
+
+enum CandidateStatus {
+  new
+  contacted
+  interview
+  offer
+  hired
+  rejected
+}
+
+enum TaskStatus {
+  open
+  done
+  cancelled
+}
+
+enum TaskPriority {
+  low
+  medium
+  high
+}
+
+model User {
+  id                       String                   @id @default(uuid()) @db.Uuid
+  email                    String                   @unique
+  passwordHash             String                   @map("password_hash")
+  fullName                 String                   @map("full_name")
+  role                     UserRole                 @default(recruiter)
+  isActive                 Boolean                  @default(true) @map("is_active")
+  createdAt                DateTime                 @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                DateTime                 @updatedAt @map("updated_at") @db.Timestamptz(6)
+  assignedCandidates       Candidate[]              @relation("AssignedRecruiter")
+  changedCandidateStatuses CandidateStatusHistory[] @relation("StatusChangedByUser")
+  notes                    CandidateNote[]          @relation("NoteAuthor")
+  tasks                    Task[]                   @relation("TaskAssignee")
+  activityLogs             ActivityLog[]            @relation("ActivityActor")
+
+  @@map("users")
+}
+
+model Vacancy {
+  id         String      @id @default(uuid()) @db.Uuid
+  title      String
+  department String?
+  city       String?
+  isActive   Boolean     @default(true) @map("is_active")
+  createdAt  DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
+  candidates Candidate[]
+
+  @@map("vacancies")
+}
+
+model Candidate {
+  id                  String                   @id @default(uuid()) @db.Uuid
+  fullName            String                   @map("full_name")
+  phone               String
+  email               String?
+  city                String?
+  source              String                   @default("other")
+  status              CandidateStatus          @default(new)
+  vacancyId           String?                  @map("vacancy_id") @db.Uuid
+  assignedRecruiterId String                   @map("assigned_recruiter_id") @db.Uuid
+  lastContactAt       DateTime?                @map("last_contact_at") @db.Timestamptz(6)
+  nextFollowUpAt      DateTime?                @map("next_follow_up_at") @db.Timestamptz(6)
+  comment             String?
+  isDeleted           Boolean                  @default(false) @map("is_deleted")
+  createdAt           DateTime                 @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime                 @updatedAt @map("updated_at") @db.Timestamptz(6)
+  vacancy             Vacancy?                 @relation(fields: [vacancyId], references: [id], onDelete: SetNull)
+  assignedRecruiter   User                     @relation("AssignedRecruiter", fields: [assignedRecruiterId], references: [id])
+  statusHistory       CandidateStatusHistory[]
+  notes               CandidateNote[]
+  tasks               Task[]
+
+  @@index([status], map: "idx_candidates_status")
+  @@index([assignedRecruiterId], map: "idx_candidates_recruiter")
+  @@index([nextFollowUpAt], map: "idx_candidates_followup")
+  @@index([createdAt], map: "idx_candidates_created_at")
+  @@index([isDeleted, status], map: "idx_candidates_active")
+  @@map("candidates")
+}
+
+model CandidateStatusHistory {
+  id              String           @id @default(uuid()) @db.Uuid
+  candidateId     String           @map("candidate_id") @db.Uuid
+  fromStatus      CandidateStatus? @map("from_status")
+  toStatus        CandidateStatus  @map("to_status")
+  changedByUserId String           @map("changed_by_user_id") @db.Uuid
+  changedAt       DateTime         @default(now()) @map("changed_at") @db.Timestamptz(6)
+  reason          String?
+  candidate       Candidate        @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  changedByUser   User             @relation("StatusChangedByUser", fields: [changedByUserId], references: [id])
+
+  @@index([candidateId, changedAt], map: "idx_history_candidate_changed_at")
+  @@map("candidate_status_history")
+}
+
+model CandidateNote {
+  id           String    @id @default(uuid()) @db.Uuid
+  candidateId  String    @map("candidate_id") @db.Uuid
+  authorUserId String    @map("author_user_id") @db.Uuid
+  noteText     String    @map("note_text")
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  candidate    Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  author       User      @relation("NoteAuthor", fields: [authorUserId], references: [id])
+
+  @@index([candidateId, createdAt], map: "idx_notes_candidate_created_at")
+  @@map("candidate_notes")
+}
+
+model Task {
+  id             String       @id @default(uuid()) @db.Uuid
+  candidateId    String?      @map("candidate_id") @db.Uuid
+  assigneeUserId String       @map("assignee_user_id") @db.Uuid
+  title          String
+  dueAt          DateTime     @map("due_at") @db.Timestamptz(6)
+  status         TaskStatus   @default(open)
+  priority       TaskPriority @default(medium)
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
+  candidate      Candidate?   @relation(fields: [candidateId], references: [id], onDelete: SetNull)
+  assignee       User         @relation("TaskAssignee", fields: [assigneeUserId], references: [id])
+
+  @@index([assigneeUserId, status, dueAt], map: "idx_tasks_assignee_status_due")
+  @@map("tasks")
+}
+
+model ActivityLog {
+  id          String   @id @default(uuid()) @db.Uuid
+  entityType  String   @map("entity_type")
+  entityId    String   @map("entity_id") @db.Uuid
+  action      String
+  payload     Json     @default("{}")
+  actorUserId String?  @map("actor_user_id") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  actor       User?    @relation("ActivityActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([entityType, entityId, createdAt], map: "idx_activity_entity")
+  @@map("activity_log")
+}

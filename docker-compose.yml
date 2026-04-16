@@ -1,0 +1,39 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: recruitment-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: recruitment_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - recruitment_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d recruitment_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: ./recruitment-api
+      dockerfile: Dockerfile
+    container_name: recruitment-api
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PORT: 3000
+      JWT_SECRET: change-me-in-production
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/recruitment_db?schema=public
+    ports:
+      - "3000:3000"
+
+volumes:
+  recruitment_db_data:
