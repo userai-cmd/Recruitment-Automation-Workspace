@@ -30,6 +30,10 @@
         box-shadow:inset 0 1px 0 rgba(255,255,255,0.03),inset 0 0 18px rgba(40,167,255,0.03);
         appearance:none;font-family:inherit
       }
+      select option{
+        color:#0b2a4d;
+        background:#f3f7ff;
+      }
       .input:focus,.textarea:focus,select:focus{border-color:var(--border-hover);box-shadow:0 0 0 3px rgba(74,120,212,0.12),0 0 22px rgba(30,144,255,0.12)}
       .textarea{min-height:130px;resize:vertical}
       .footer{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-top:24px;padding-top:20px;border-top:1px solid rgba(255,255,255,0.06)}
@@ -40,6 +44,11 @@
       .msg{display:none;text-align:center;padding:16px 20px;margin-top:16px;border-radius:14px;font-size:14px}
       .msg.err{background:rgba(200,30,30,0.1);border:1px solid rgba(255,80,80,0.25);color:#ff8080}
       .msg.ok{background:rgba(0,200,80,0.08);border:1px solid rgba(0,200,80,0.25);color:#6ef0a5}
+      .core-wrap{width:280px;height:112px;top:26px;opacity:.48}
+      .core-wrap::before,.core-wrap::after{width:92px;opacity:.45}
+      .core-eye .outer{inset:12px 24px;border-color:rgba(122,209,255,0.38)}
+      .core-eye .mid{inset:24px 78px;opacity:.8}
+      .hero-content{padding-top:112px}
       @media(max-width:980px){.grid{grid-template-columns:1fr}.footer{flex-direction:column;align-items:stretch}.button{width:100%;min-width:0}}
     </style>
   </head>
@@ -50,7 +59,7 @@
     <div class="page">
       <div class="shell">
         <nav class="top-nav">
-          <a class="brand" href="/">
+          <a class="brand" href="/home">
             <img src="/big_dnipro_logo_final.png" alt="BiG Dnipro Logo" />
             <span class="brand-text">
               <span class="brand-title">BiG Dnipro</span>
@@ -58,13 +67,14 @@
             </span>
           </a>
           <div class="nav-links">
-            <a href="/">Головна</a>
+            <a href="/home">Головна</a>
             <a class="active" href="/candidate">Анкета кандидата</a>
             <a href="/dashboard">Кандидати</a>
-            <a href="/dashboard">КПІ</a>
+            <a href="/kpi">КПІ</a>
           </div>
           <div style="display:flex;align-items:center;gap:10px">
             <div class="status-pill"><div class="status-dot"></div>Система активна</div>
+            <button class="theme-toggle" data-theme-toggle type="button">Soft</button>
             <div class="nav-clock">
               <div class="nav-clock-time" id="clock">--:--:--</div>
               <div class="nav-clock-date" id="clock-date">—</div>
@@ -109,6 +119,33 @@
                 <div class="field">
                   <label class="label" for="pEmail">Email</label>
                   <input class="input" id="pEmail" type="email" />
+                </div>
+                <div class="field">
+                  <label class="label" for="pPosition">Позиція</label>
+                  <select id="pPosition">
+                    <option value="">Оберіть позицію</option>
+                    <option value="Бригадир">Бригадир</option>
+                    <option value="Бригадир водіїв навантажувачів">Бригадир водіїв навантажувачів</option>
+                    <option value="Водій доставки">Водій доставки</option>
+                    <option value="Водій навантажувача">Водій навантажувача</option>
+                    <option value="Двірник">Двірник</option>
+                    <option value="Диспетчер">Диспетчер</option>
+                    <option value="Електрик">Електрик</option>
+                    <option value="Завідувач господарства">Завідувач господарства</option>
+                    <option value="Керівник РСП">Керівник РСП</option>
+                    <option value="Керуючий відділенням">Керуючий відділенням</option>
+                    <option value="Менеджер з адміністративної діяльності">Менеджер з адміністративної діяльності</option>
+                    <option value="Менеджер з логістики">Менеджер з логістики</option>
+                    <option value="Оператор комп`ютерного набору">Оператор комп`ютерного набору</option>
+                    <option value="Підсобний робітник">Підсобний робітник</option>
+                    <option value="Прибиральник службових приміщень">Прибиральник службових приміщень</option>
+                    <option value="Приймальник товарів">Приймальник товарів</option>
+                    <option value="Сканувальник">Сканувальник</option>
+                    <option value="Слюсар з ремонту техніки">Слюсар з ремонту техніки</option>
+                    <option value="Транспортувальник">Транспортувальник</option>
+                    <option value="Фахівець з рекламації">Фахівець з рекламації</option>
+                    <option value="Фахівець із роботи з інцидентами">Фахівець із роботи з інцидентами</option>
+                  </select>
                 </div>
                 <div class="field">
                   <label class="label" for="pCity">Місто</label>
@@ -161,6 +198,7 @@
       window.UI?.initStarsAndParticles();
       window.UI?.initClock();
       window.UI?.setActiveNav('/candidate');
+      window.UI?.initThemeToggle();
     </script>
   </body>
 </html>

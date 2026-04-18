@@ -45,6 +45,7 @@ CREATE TABLE IF NOT EXISTS candidates (
     full_name TEXT NOT NULL,
     phone TEXT NOT NULL,
     email TEXT,
+    position TEXT,
     city TEXT,
     source TEXT NOT NULL DEFAULT 'other',
     status candidate_status NOT NULL DEFAULT 'new',

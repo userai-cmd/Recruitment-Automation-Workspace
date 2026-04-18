@@ -70,6 +70,7 @@ model Candidate {
   fullName            String                   @map("full_name")
   phone               String
   email               String?
+  position            String?
   city                String?
   source              String                   @default("other")
   status              CandidateStatus          @default(new)

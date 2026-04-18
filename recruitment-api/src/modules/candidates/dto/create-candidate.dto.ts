@@ -17,6 +17,10 @@ export class CreateCandidateDto {
 
   @IsOptional()
   @IsString()
+  position?: string;
+
+  @IsOptional()
+  @IsString()
   source?: string;
 
   @IsOptional()

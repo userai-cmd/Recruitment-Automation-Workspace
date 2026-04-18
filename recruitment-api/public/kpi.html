@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="uk">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>BiG Dnipro - KPI</title>
+    <link rel="stylesheet" href="/ui.css" />
+    <style>
+      .summaryRow{display:grid;grid-template-columns:repeat(6,minmax(130px,1fr));gap:12px;margin:0 0 16px}
+      .summaryCard{border-radius:16px;padding:12px 10px;text-align:center;border:1px solid rgba(116,198,255,.25);
+        background:linear-gradient(180deg,rgba(8,20,38,.82),rgba(5,14,28,.92));box-shadow:inset 0 1px 0 rgba(255,255,255,.03),0 18px 40px rgba(0,0,0,.28)}
+      .summaryCard .v{font-size:28px;font-weight:900;line-height:1}
+      .summaryCard .l{margin-top:6px;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px}
+      .summaryCard.c1 .v{color:#89d1ff}.summaryCard.c2 .v{color:#8cf0c1}.summaryCard.c3 .v{color:#cde68b}
+      .summaryCard.c4 .v{color:#c6a4ff}.summaryCard.c5 .v{color:#ffd199}.summaryCard.c6 .v{color:#ffb8c3}
+
+      .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+      .panel{border-radius:20px;padding:14px;border:1px solid rgba(116,198,255,.22);
+        background:linear-gradient(180deg,rgba(8,20,38,.82),rgba(5,14,28,.92));box-shadow:inset 0 1px 0 rgba(255,255,255,.03),0 18px 40px rgba(0,0,0,.28)}
+      .panel h3{margin:0;font-size:15px}
+      .sub{margin-top:4px;color:var(--muted);font-size:12px}
+      .canvas{margin-top:12px}
+
+      .funnelRow{display:flex;align-items:center;gap:10px;margin:8px 0}
+      .funnelLbl{width:110px;font-size:12px;color:#c6d8ee}
+      .funnelBar{height:22px;border-radius:999px;background:rgba(130,180,255,.14);position:relative;overflow:hidden;flex:1}
+      .funnelFill{position:absolute;left:0;top:0;bottom:0;border-radius:999px;background:linear-gradient(90deg,#6ac8ff,#6be3a7)}
+      .funnelVal{width:34px;text-align:right;font-size:12px;color:#bde5ff}
+
+      .donutWrap{display:flex;justify-content:center;padding:4px 0 10px}
+      .legend{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:8px}
+      .legendItem{display:flex;align-items:center;gap:6px;font-size:12px;color:#c6d8ee}
+      .dot{width:8px;height:8px;border-radius:50%}
+
+      .bars{margin-top:8px}
+      .barRow{display:grid;grid-template-columns:140px 1fr 32px;gap:10px;align-items:center;margin:8px 0}
+      .barLbl{font-size:12px;color:#c6d8ee;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .barTrack{height:10px;border-radius:999px;background:rgba(130,180,255,.15);overflow:hidden}
+      .barFill{height:100%;border-radius:999px;background:linear-gradient(90deg,#a8f348,#7fe53f)}
+      .barVal{text-align:right;font-size:12px;color:#bde5ff}
+
+      .loading,.error{padding:10px 2px 0}
+      .error{color:#ff8080;white-space:pre-wrap}
+      .core-wrap{width:300px;height:118px;top:28px;opacity:.52}
+      .core-wrap::before,.core-wrap::after{width:96px;opacity:.5}
+      .core-eye .outer{inset:13px 26px;border-color:rgba(122,209,255,0.4)}
+      .core-eye .mid{inset:25px 82px;opacity:.82}
+      .hero-content{padding-top:118px}
+      @media(max-width:1200px){.summaryRow{grid-template-columns:repeat(3,minmax(130px,1fr))}}
+      @media(max-width:920px){.grid{grid-template-columns:1fr}.summaryRow{grid-template-columns:repeat(2,minmax(130px,1fr))}}
+    </style>
+  </head>
+  <body>
+    <div id="stars"></div>
+    <div id="particles"></div>
+    <div class="page">
+      <div class="shell">
+        <nav class="top-nav">
+          <a class="brand" href="/home">
+            <img src="/big_dnipro_logo_final.png" alt="BiG Dnipro Logo" />
+            <span class="brand-text">
+              <span class="brand-title">BiG Dnipro</span>
+              <span class="brand-subtitle">Automation Control Panel</span>
+            </span>
+          </a>
+          <div class="nav-links">
+            <a href="/home">Головна</a>
+            <a href="/candidate">Анкета кандидата</a>
+            <a href="/dashboard">Кандидати</a>
+            <a class="active" href="/kpi">КПІ</a>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="status-pill"><div class="status-dot"></div>Система активна</div>
+            <button class="theme-toggle" data-theme-toggle type="button">Soft</button>
+            <div class="nav-clock">
+              <div class="nav-clock-time" id="clock">--:--:--</div>
+              <div class="nav-clock-date" id="clock-date">—</div>
+            </div>
+          </div>
+        </nav>
+
+        <section class="hero">
+          <div class="core-wrap" aria-hidden="true">
+            <div class="core-eye"><div class="outer"></div><div class="mid"></div></div>
+          </div>
+          <div class="hero-content">
+            <div class="eyebrow">Recruitment Automation Workspace</div>
+            <h1 class="title">KPI та Аналітика</h1>
+            <p class="subtitle" id="subline">Завантаження KPI...</p>
+          </div>
+        </section>
+
+        <div class="summaryRow" id="summaryRow"></div>
+
+        <div class="grid">
+          <div class="panel">
+            <h3>Воронка рекрутингу</h3>
+            <div class="sub">Кандидати по етапах</div>
+            <div class="canvas" id="funnel"></div>
+          </div>
+          <div class="panel">
+            <h3>Розподіл за статусами</h3>
+            <div class="sub">Структура бази</div>
+            <div class="canvas">
+              <div class="donutWrap"><svg id="statusDonut" width="210" height="210" viewBox="0 0 210 210"></svg></div>
+              <div class="legend" id="statusLegend"></div>
+            </div>
+          </div>
+          <div class="panel">
+            <h3>Джерела кандидатів</h3>
+            <div class="sub">Ефективність каналів</div>
+            <div class="bars" id="sourceBars"></div>
+          </div>
+          <div class="panel">
+            <h3>Популярні позиції</h3>
+            <div class="sub">Топ 8 вакансій</div>
+            <div class="bars" id="positionBars"></div>
+          </div>
+        </div>
+
+        <div id="loading" class="loading">Завантажую KPI...</div>
+        <div id="error" class="error" style="display:none"></div>
+      </div>
+    </div>
+
+    <script src="/ui.js"></script>
+    <script src="/app.js"></script>
+    <script>
+      const statusColors = ['#7cc3ff', '#7de5c1', '#b39aff', '#9ee44f', '#f5b25c', '#f28aa0'];
+
+      function authHeaders() {
+        const token = localStorage.getItem('accessToken') || '';
+        if (!token) {
+          window.location.href = '/';
+          return null;
+        }
+        return { Authorization: `Bearer ${token}` };
+      }
+
+      function showError(msg) {
+        const err = document.getElementById('error');
+        const loading = document.getElementById('loading');
+        err.style.display = 'block';
+        err.textContent = msg;
+        if (loading) loading.style.display = 'none';
+      }
+
+      function card(label, value, cls, suffix = '') {
+        return `<div class="summaryCard ${cls}"><div class="v">${value}${suffix}</div><div class="l">${label}</div></div>`;
+      }
+
+      function renderSummary(summary) {
+        const row = document.getElementById('summaryRow');
+        row.innerHTML = [
+          card('Всього', summary.total, 'c1'),
+          card('Оформлені', summary.hired, 'c2'),
+          card('Конверсія', summary.conversion, 'c3', '%'),
+          card('Співбесіда', summary.interview, 'c4'),
+          card('Відхилені', summary.rejected, 'c5'),
+          card('Відсів', summary.rejectionRate, 'c6', '%'),
+        ].join('');
+      }
+
+      function renderFunnel(data) {
+        const root = document.getElementById('funnel');
+        const max = Math.max(1, ...data.map((d) => d.value));
+        root.innerHTML = data.map((d) => {
+          const w = Math.max(8, Math.round((d.value / max) * 100));
+          return `<div class="funnelRow"><div class="funnelLbl">${d.stage}</div><div class="funnelBar"><div class="funnelFill" style="width:${w}%"></div></div><div class="funnelVal">${d.value}</div></div>`;
+        }).join('');
+      }
+
+      function renderDonut(data) {
+        const svg = document.getElementById('statusDonut');
+        const legend = document.getElementById('statusLegend');
+        const total = Math.max(1, data.reduce((acc, d) => acc + d.value, 0));
+        const r = 70;
+        const c = 2 * Math.PI * r;
+        let offset = 0;
+
+        svg.innerHTML = `<circle cx="105" cy="105" r="${r}" fill="none" stroke="rgba(120,170,255,.16)" stroke-width="20"></circle>`;
+        data.forEach((d, i) => {
+          const size = (d.value / total) * c;
+          const color = statusColors[i % statusColors.length];
+          svg.innerHTML += `<circle cx="105" cy="105" r="${r}" fill="none" stroke="${color}" stroke-width="20" stroke-linecap="round" stroke-dasharray="${size} ${c - size}" stroke-dashoffset="${-offset}" transform="rotate(-90 105 105)"></circle>`;
+          offset += size;
+        });
+        svg.innerHTML += '<circle cx="105" cy="105" r="46" fill="rgba(3,10,20,.95)"></circle>';
+        svg.innerHTML += `<text x="105" y="102" text-anchor="middle" fill="#d7ecff" font-size="22" font-weight="800">${total}</text>`;
+        svg.innerHTML += `<text x="105" y="122" text-anchor="middle" fill="#9eb5d6" font-size="11">Кандидатів</text>`;
+
+        legend.innerHTML = data.map((d, i) =>
+          `<div class="legendItem"><span class="dot" style="background:${statusColors[i % statusColors.length]}"></span><span>${d.label} (${d.value})</span></div>`
+        ).join('');
+      }
+
+      function renderBars(containerId, rows) {
+        const root = document.getElementById(containerId);
+        const max = Math.max(1, ...rows.map((r) => r.value));
+        root.innerHTML = rows.map((r) => {
+          const w = Math.max(6, Math.round((r.value / max) * 100));
+          return `<div class="barRow"><div class="barLbl">${r.label}</div><div class="barTrack"><div class="barFill" style="width:${w}%"></div></div><div class="barVal">${r.value}</div></div>`;
+        }).join('');
+      }
+
+      async function loadKpi() {
+        const headers = authHeaders();
+        if (!headers) return;
+        try {
+          const meRes = await fetch('/auth/me', { headers });
+          if (!meRes.ok) throw new Error('auth failed');
+          const me = await meRes.json();
+          document.getElementById('subline').textContent = `Ви: ${me.email} (${me.role})`;
+
+          const res = await fetch('/candidates/kpi/overview', { headers });
+          if (!res.ok) throw new Error('kpi request failed');
+          const data = await res.json();
+
+          renderSummary(data.summary);
+          renderFunnel(data.funnel);
+          renderDonut(data.byStatus);
+          renderBars('sourceBars', data.bySource);
+          renderBars('positionBars', data.topPositions);
+
+          const loading = document.getElementById('loading');
+          if (loading) loading.style.display = 'none';
+        } catch (e) {
+          showError(String(e?.message || e));
+        }
+      }
+
+      window.UI?.initStarsAndParticles();
+      window.UI?.initClock();
+      window.UI?.setActiveNav('/kpi');
+      window.UI?.initThemeToggle();
+      loadKpi();
+    </script>
+  </body>
+</html>

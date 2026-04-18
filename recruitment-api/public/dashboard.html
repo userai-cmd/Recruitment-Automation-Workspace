@@ -12,45 +12,61 @@
       .kpi .lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px}
       .kpi .val{margin-top:6px;font-size:26px;font-weight:900;color:#fff;text-shadow:0 0 18px rgba(40,167,255,0.1)}
 
-      .controls{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:16px}
-      .chips{display:flex;gap:10px;flex-wrap:wrap}
-      .chip{padding:9px 14px;border-radius:999px;border:1px solid rgba(103,181,255,0.18);background:rgba(5,14,26,0.54);
-        color:#d9eeff;font-size:12px;font-weight:800;cursor:pointer;transition:.25s ease;text-transform:uppercase;letter-spacing:.5px}
-      .chip:hover,.chip.active{border-color:rgba(123,207,255,0.44);background:linear-gradient(180deg,rgba(16,54,100,0.74),rgba(8,24,48,0.82));box-shadow:0 0 18px rgba(40,167,255,0.16);color:#fff}
-      .search{flex:1;min-width:260px;display:flex;align-items:center;gap:10px;background:rgba(5,15,40,0.85);border:1px solid rgba(0,150,255,0.28);
+      .listMeta{margin:-4px 0 14px;color:var(--muted);font-size:14px}
+      .controls{display:grid;grid-template-columns:1fr 200px 220px 200px auto auto;align-items:center;gap:12px;margin-bottom:16px}
+      .search{display:flex;align-items:center;gap:10px;background:rgba(5,15,40,0.85);border:1px solid rgba(0,150,255,0.28);
         border-radius:12px;padding:11px 16px;backdrop-filter:blur(8px);transition:border-color .25s,box-shadow .25s}
       .search:focus-within{border-color:rgba(0,200,255,0.6);box-shadow:0 0 0 3px rgba(0,150,255,0.1),0 0 22px rgba(0,150,255,0.12)}
       .search svg{width:15px;height:15px;stroke:var(--muted);flex-shrink:0;fill:none}
       .search input{background:none;border:none;outline:none;color:var(--text);font-size:14px;width:100%;font-family:inherit}
       .search input::placeholder{color:var(--muted)}
+      .filterSelect{width:100%;background:rgba(5,15,40,0.85);border:1px solid rgba(0,150,255,0.28);color:#d9eeff;border-radius:12px;
+        padding:11px 12px;font-size:13px;font-weight:700;outline:none}
+      .filterSelect option{color:#0b2a4d;background:#f3f7ff}
 
       .btn{border:none;border-radius:14px;padding:12px 16px;font-size:13px;font-weight:900;cursor:pointer;color:#fff;
         background:linear-gradient(180deg,rgba(40,167,255,0.98),rgba(20,102,214,0.96));
         box-shadow:0 14px 30px rgba(30,99,230,0.25),0 0 22px rgba(62,151,255,0.22),inset 0 1px 0 rgba(255,255,255,0.18);text-transform:uppercase;letter-spacing:.4px}
       .btn.secondary{background:rgba(5,14,26,0.54);border:1px solid rgba(103,181,255,0.14);box-shadow:inset 0 1px 0 rgba(255,255,255,0.03),0 18px 40px rgba(0,0,0,0.28)}
 
-      .board{display:flex;gap:14px;overflow-x:auto;padding-bottom:8px}
-      .col{min-width:280px;max-width:280px;border-radius:22px;padding:14px;background:linear-gradient(180deg,rgba(8,20,38,0.82),rgba(5,14,28,0.92));
-        border:1px solid rgba(116,198,255,0.22);box-shadow:inset 0 1px 0 rgba(255,255,255,0.03),0 18px 40px rgba(0,0,0,0.28)}
-      .colHead{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
-      .colTitle{font-size:13px;font-weight:900;letter-spacing:.5px;text-transform:uppercase}
-      .count{font-size:11px;color:var(--muted)}
-      .card{border-radius:18px;padding:12px 12px 10px;margin-bottom:12px;background:rgba(8,20,38,0.55);border:1px solid rgba(126,213,255,0.16);
-        box-shadow:inset 0 0 18px rgba(40,167,255,0.03)}
-      .name{font-weight:900;letter-spacing:.2px}
-      .meta{margin-top:6px;font-size:12px;color:#c6d8ee;line-height:1.35;white-space:pre-wrap}
-      .tags{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
-      .tag{font-size:11px;padding:3px 8px;border-radius:999px;border:1px solid rgba(88,183,255,0.22);color:#a9d7ff;background:rgba(8,16,28,0.5)}
-      .actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
-      .actionBtn{padding:8px 10px;border-radius:12px;border:1px solid rgba(88,183,255,0.18);background:rgba(5,14,26,0.54);color:#d9eeff;
-        cursor:pointer;font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.3px;transition:.25s ease}
-      .actionBtn:hover{border-color:rgba(123,207,255,0.44);box-shadow:0 0 18px rgba(40,167,255,0.16);color:#fff}
-      .muted{color:var(--muted);font-size:12px}
+      .tableWrap{border-radius:20px;overflow:hidden;border:1px solid rgba(116,198,255,0.22);background:linear-gradient(180deg,rgba(8,20,38,0.82),rgba(5,14,28,0.92));
+        box-shadow:inset 0 1px 0 rgba(255,255,255,0.03),0 18px 40px rgba(0,0,0,0.28)}
+      .candTable{width:100%;border-collapse:collapse}
+      .candTable th,.candTable td{padding:12px 14px;border-bottom:1px solid rgba(126,213,255,0.12);text-align:left;font-size:13px}
+      .candTable thead th{font-size:11px;color:var(--muted);letter-spacing:.8px;text-transform:uppercase}
+      .candTable tbody tr:hover{background:rgba(80,140,255,0.06)}
+      .mainText{font-weight:800}
+      .subText{font-size:12px;color:var(--muted);margin-top:2px}
+      .statusSelect{background:rgba(5,15,40,0.85);border:1px solid rgba(0,150,255,0.28);color:#d9eeff;border-radius:999px;padding:7px 10px;font-size:12px}
+      .statusSelect option{color:#0b2a4d;background:#f3f7ff}
+      .statusSelect.status-new{border-color:rgba(99,179,255,.45);color:#bfe1ff}
+      .statusSelect.status-contacted{border-color:rgba(80,220,200,.45);color:#a9f3e8}
+      .statusSelect.status-interview{border-color:rgba(170,130,255,.45);color:#dac7ff}
+      .statusSelect.status-offer{border-color:rgba(255,198,90,.45);color:#ffe0a6}
+      .statusSelect.status-hired{border-color:rgba(95,228,128,.45);color:#bdf5c8}
+      .statusSelect.status-rejected{border-color:rgba(255,120,140,.45);color:#ffcad4}
+      .rowAction{background:transparent;border:none;color:#b6ccea;cursor:pointer;font-size:14px}
+      .emptyRow{text-align:center;color:var(--muted);padding:20px}
+      .pagination{display:flex;align-items:center;justify-content:flex-end;gap:10px;margin-top:14px}
+      .pageInfo{font-size:12px;color:var(--muted);min-width:140px;text-align:center}
+      .pageBtn{padding:8px 12px;border-radius:10px;border:1px solid rgba(103,181,255,0.18);background:rgba(5,14,26,0.54);color:#d9eeff;
+        cursor:pointer;font-size:12px;font-weight:800;transition:.25s ease}
+      .pageBtn:disabled{opacity:.45;cursor:not-allowed}
+      .sortSelect{width:100%;background:rgba(5,15,40,0.85);border:1px solid rgba(0,150,255,0.28);color:#d9eeff;border-radius:12px;
+        padding:11px 12px;font-size:13px;font-weight:700;outline:none}
+      .sortSelect option{color:#0b2a4d;background:#f3f7ff}
 
       .loading,.error{padding:10px 2px 0}
       .error{color:#ff8080;white-space:pre-wrap}
+      .core-wrap{width:280px;height:112px;top:26px;opacity:.48}
+      .core-wrap::before,.core-wrap::after{width:92px;opacity:.45}
+      .core-eye .outer{inset:12px 24px;border-color:rgba(122,209,255,0.38)}
+      .core-eye .mid{inset:24px 78px;opacity:.8}
+      .hero-content{padding-top:112px}
 
-      @media(max-width:1180px){.kpiRow{grid-template-columns:repeat(2,minmax(0,1fr))}}
+      @media(max-width:1300px){.controls{grid-template-columns:1fr 1fr 1fr}.btn{grid-column:auto}}
+      @media(max-width:1180px){.kpiRow{grid-template-columns:repeat(2,minmax(0,1fr))}.controls{grid-template-columns:1fr 1fr}.btn{grid-column:1/-1}}
+      @media(max-width:900px){.tableWrap{overflow-x:auto}.candTable{min-width:980px}}
     </style>
   </head>
   <body>
@@ -60,7 +76,7 @@
     <div class="page">
       <div class="shell">
         <nav class="top-nav">
-          <a class="brand" href="/">
+          <a class="brand" href="/home">
             <img src="/big_dnipro_logo_final.png" alt="BiG Dnipro Logo" />
             <span class="brand-text">
               <span class="brand-title">BiG Dnipro</span>
@@ -68,13 +84,14 @@
             </span>
           </a>
           <div class="nav-links">
-            <a href="/">Головна</a>
+            <a href="/home">Головна</a>
             <a href="/candidate">Анкета кандидата</a>
             <a class="active" href="/dashboard">Кандидати</a>
-            <a href="/dashboard">КПІ</a>
+            <a href="/kpi">КПІ</a>
           </div>
           <div style="display:flex;align-items:center;gap:10px">
             <div class="status-pill"><div class="status-dot"></div>Система активна</div>
+            <button class="theme-toggle" data-theme-toggle type="button">Soft</button>
             <div class="nav-clock">
               <div class="nav-clock-time" id="clock">--:--:--</div>
               <div class="nav-clock-date" id="clock-date">—</div>
@@ -100,22 +117,58 @@
           <div class="kpi"><div class="lbl">На оформленні</div><div id="kpiOffer" class="val">0</div></div>
           <div class="kpi"><div class="lbl">Оформлені</div><div id="kpiHired" class="val">0</div></div>
         </div>
+        <div class="listMeta">Всього: <strong id="listTotal">0</strong></div>
 
         <div class="controls">
-          <div class="chips">
-            <button class="chip active" data-filter="all" type="button">Всі</button>
-            <button class="chip" data-filter="noResponse3d" type="button">Без відповіді 3 дні</button>
-            <button class="chip" data-filter="hot" type="button">Гарячі</button>
-            <button class="chip" data-filter="inProgress" type="button">На оформленні</button>
-          </div>
           <div class="search">
             <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
-            <input id="searchInput" type="text" placeholder="Пошук: ПІБ або телефон" />
+            <input id="searchInput" type="text" placeholder="Пошук за ім'ям, телефоном, позицією..." />
           </div>
+          <select id="statusFilter" class="filterSelect">
+            <option value="all">Всі статуси</option>
+            <option value="new">Новий</option>
+            <option value="contacted">Контакт</option>
+            <option value="interview">Співбесіда</option>
+            <option value="offer">Офер</option>
+            <option value="hired">Оформлений</option>
+            <option value="rejected">Відхилений</option>
+          </select>
+          <select id="positionFilter" class="filterSelect">
+            <option value="all">Всі позиції</option>
+          </select>
+          <select id="sortFilter" class="sortSelect">
+            <option value="createdAt:desc">Сортування: дата ↓</option>
+            <option value="createdAt:asc">Сортування: дата ↑</option>
+            <option value="fullName:asc">Сортування: ПІБ А-Я</option>
+            <option value="fullName:desc">Сортування: ПІБ Я-А</option>
+            <option value="status:asc">Сортування: статус А-Я</option>
+          </select>
+          <button class="btn secondary" id="exportCsvBtn" type="button">Експорт CSV</button>
           <a class="btn" href="/candidate">+ Новий кандидат</a>
         </div>
 
-        <div class="board" id="board"></div>
+        <div class="tableWrap">
+          <table class="candTable">
+            <thead>
+              <tr>
+                <th>ПІБ</th>
+                <th>Телефон</th>
+                <th>Позиція</th>
+                <th>Місто</th>
+                <th>Джерело</th>
+                <th>Дата</th>
+                <th>Статус</th>
+                <th>Дії</th>
+              </tr>
+            </thead>
+            <tbody id="candidatesBody"></tbody>
+          </table>
+        </div>
+        <div class="pagination">
+          <button class="pageBtn" id="prevPageBtn" type="button">← Назад</button>
+          <div class="pageInfo" id="pageInfo">Сторінка 1 / 1</div>
+          <button class="pageBtn" id="nextPageBtn" type="button">Вперед →</button>
+        </div>
 
         <div id="loading" class="loading">Завантажую кандидатів...</div>
         <div id="error" class="error" style="display:none"></div>
@@ -128,6 +181,7 @@
       window.UI?.initStarsAndParticles();
       window.UI?.initClock();
       window.UI?.setActiveNav('/dashboard');
+      window.UI?.initThemeToggle();
     </script>
   </body>
 </html>

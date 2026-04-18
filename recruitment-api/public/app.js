@@ -2,8 +2,22 @@
 const API_BASE = '';
 
 const STATUSES = ['new', 'contacted', 'interview', 'offer', 'hired', 'rejected'];
-let activeFilter = 'all';
+const STATUS_LABELS = {
+  new: 'Новий',
+  contacted: 'Контакт',
+  interview: 'Співбесіда',
+  offer: 'Офер',
+  hired: 'Оформлений',
+  rejected: 'Відхилений',
+};
 let searchTerm = '';
+let dashboardCandidates = [];
+let dashboardUser = null;
+let selectedStatus = 'all';
+let selectedPosition = 'all';
+let sortBy = 'createdAt:desc';
+let currentPage = 1;
+const PAGE_SIZE = 10;
 
 function getToken() {
   return localStorage.getItem('accessToken') || '';
@@ -66,7 +80,7 @@ async function login() {
       }
       const data = await res.json();
       localStorage.setItem('accessToken', data.accessToken);
-      window.location.href = '/dashboard';
+      window.location.href = '/home';
     } catch (e2) {
       if (err) {
         err.style.display = 'block';
@@ -76,175 +90,346 @@ async function login() {
   });
 }
 
-function renderColumns() {
-  const board = document.getElementById('board');
-  board.innerHTML = '';
-
-  for (const status of STATUSES) {
-    const col = document.createElement('div');
-    col.className = 'col';
-
-    const head = document.createElement('div');
-    head.className = 'colHead';
-
-    const title = document.createElement('div');
-    title.className = 'colTitle';
-    title.textContent = status;
-
-    const count = document.createElement('div');
-    count.className = 'count';
-    count.id = `count-${status}`;
-    count.textContent = '0';
-
-    const list = document.createElement('div');
-    list.dataset.status = status;
-
-    head.appendChild(title);
-    head.appendChild(count);
-    col.appendChild(head);
-    col.appendChild(list);
-    board.appendChild(col);
-  }
-
-  return board;
-}
-
-function statusButtons(currentStatus) {
-  // Simple: show buttons for the next stages (not a full Kanban drag/drop yet).
-  const idx = STATUSES.indexOf(currentStatus);
-  const next = STATUSES.slice(idx + 1);
-  // Limit buttons to keep UI clean.
-  return next.slice(0, 3);
-}
-
-function renderCandidateCard(cand, onChangeStatus) {
-  const card = document.createElement('div');
-  card.className = 'card';
-
-  const name = document.createElement('div');
-  name.className = 'name';
-  name.textContent = cand.fullName;
-
-  const meta = document.createElement('div');
-  meta.className = 'meta';
-  meta.textContent = `Тел: ${cand.phone}\nМісто: ${cand.city || '-'}\nДжерело: ${cand.source || '-'}`;
-
-  const tags = document.createElement('div');
-  tags.className = 'tags';
-  if (cand.source) {
-    const t = document.createElement('div');
-    t.className = 'tag';
-    t.textContent = cand.source;
-    tags.appendChild(t);
-  }
-  if (cand.nextFollowUpAt) {
-    const t = document.createElement('div');
-    t.className = 'tag';
-    t.textContent = 'follow-up';
-    tags.appendChild(t);
-  }
-
-  const actions = document.createElement('div');
-  actions.className = 'actions';
-
-  const buttons = statusButtons(cand.status);
-  if (buttons.length === 0) {
-    const muted = document.createElement('div');
-    muted.className = 'muted';
-    muted.textContent = 'Фінальний етап';
-    actions.appendChild(muted);
-  } else {
-    for (const toStatus of buttons) {
-      const btn = document.createElement('button');
-      btn.className = 'actionBtn';
-      btn.textContent = `-> ${toStatus}`;
-      btn.addEventListener('click', async () => onChangeStatus(cand.id, toStatus));
-      actions.appendChild(btn);
-    }
-  }
-
-  card.appendChild(name);
-  card.appendChild(meta);
-  if (tags.childNodes.length) card.appendChild(tags);
-  card.appendChild(actions);
-  return card;
-}
-
-function daysBetween(fromIso) {
-  if (!fromIso) return 0;
-  const from = new Date(fromIso).getTime();
-  const now = Date.now();
-  return Math.floor((now - from) / (1000 * 60 * 60 * 24));
-}
-
 function passFilter(cand) {
   const q = searchTerm.trim().toLowerCase();
   if (q) {
-    const name = (cand.fullName || '').toLowerCase();
-    const phone = (cand.phone || '').toLowerCase();
-    if (!name.includes(q) && !phone.includes(q)) return false;
+    const chunks = [
+      cand.fullName,
+      cand.phone,
+      cand.position,
+      cand.city,
+      cand.source,
+      cand.email,
+    ]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase();
+    if (!chunks.includes(q)) return false;
   }
 
-  if (activeFilter === 'all') return true;
-  if (activeFilter === 'inProgress') return ['interview', 'offer'].includes(cand.status);
-  if (activeFilter === 'hot') return ['new', 'contacted'].includes(cand.status);
-  if (activeFilter === 'noResponse3d') {
-    const baseDate = cand.lastContactAt || cand.updatedAt || cand.createdAt;
-    return daysBetween(baseDate) >= 3 && !['hired', 'rejected'].includes(cand.status);
-  }
+  if (selectedStatus !== 'all' && cand.status !== selectedStatus) return false;
+  if (selectedPosition !== 'all' && (cand.position || '') !== selectedPosition) return false;
   return true;
 }
 
-function updateKpis(byStatus) {
-  const total = STATUSES.reduce((acc, s) => acc + byStatus[s].length, 0);
+function compareCandidates(a, b) {
+  const [field, direction] = sortBy.split(':');
+  const dir = direction === 'asc' ? 1 : -1;
+
+  if (field === 'createdAt') {
+    const av = new Date(a.createdAt || 0).getTime();
+    const bv = new Date(b.createdAt || 0).getTime();
+    return (av - bv) * dir;
+  }
+
+  if (field === 'status') {
+    const av = STATUS_LABELS[a.status] || a.status;
+    const bv = STATUS_LABELS[b.status] || b.status;
+    return av.localeCompare(bv, 'uk') * dir;
+  }
+
+  const av = (a[field] || '').toString();
+  const bv = (b[field] || '').toString();
+  return av.localeCompare(bv, 'uk') * dir;
+}
+
+function updateKpis(candidates) {
+  const byStatus = Object.fromEntries(STATUSES.map((s) => [s, 0]));
+  for (const c of candidates) byStatus[c.status] += 1;
+  const total = candidates.length;
   const set = (id, val) => {
     const el = document.getElementById(id);
     if (el) el.textContent = String(val);
   };
   set('kpiTotal', total);
-  set('kpiNew', byStatus.new.length);
-  set('kpiOffer', byStatus.offer.length);
-  set('kpiHired', byStatus.hired.length);
+  set('kpiNew', byStatus.new);
+  set('kpiOffer', byStatus.offer);
+  set('kpiHired', byStatus.hired);
 }
 
-async function loadPipeline() {
-  const me = await api('/auth/me');
-  document.getElementById('subline').textContent = `Ви: ${me.email} (${me.role})`;
+function formatDate(iso) {
+  if (!iso) return '-';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '-';
+  return d.toLocaleDateString('uk-UA');
+}
 
-  renderColumns();
+function toLocalDatetimeInputValue(date) {
+  const d = new Date(date);
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
 
-  const board = document.getElementById('board');
-  const byStatus = Object.fromEntries(STATUSES.map((s) => [s, []]));
+async function quickCreateTask(candidate) {
+  const title = prompt('Назва задачі', `Зв'язатися з кандидатом: ${candidate.fullName}`);
+  if (title === null) return;
+  const base = new Date();
+  base.setDate(base.getDate() + 1);
+  base.setHours(10, 0, 0, 0);
+  const dueAtText = prompt('Дедлайн (YYYY-MM-DDTHH:mm)', toLocalDatetimeInputValue(base));
+  if (dueAtText === null) return;
+  const priority = prompt('Пріоритет (low / medium / high)', 'medium');
+  if (priority === null) return;
 
-  await Promise.all(
-    STATUSES.map(async (status) => {
-      const data = await api(`/candidates?status=${encodeURIComponent(status)}&recruiterId=${encodeURIComponent(me.id)}`);
-      byStatus[status] = data;
+  await api('/tasks', {
+    method: 'POST',
+    body: JSON.stringify({
+      title: title || 'Нова задача',
+      dueAt: new Date(dueAtText).toISOString(),
+      candidateId: candidate.id,
+      priority: ['low', 'medium', 'high'].includes(priority) ? priority : 'medium',
     }),
-  );
+  });
+  alert('Задачу створено');
+}
 
-  for (const status of STATUSES) {
-    const list = document.querySelector(`.col div[data-status="${status}"]`);
-    list.innerHTML = '';
+function positionOptions(candidates) {
+  const uniq = Array.from(new Set(candidates.map((c) => (c.position || '').trim()).filter(Boolean)));
+  uniq.sort((a, b) => a.localeCompare(b, 'uk'));
+  return uniq;
+}
 
-    const filtered = byStatus[status].filter(passFilter);
-    for (const cand of filtered) {
-      const card = renderCandidateCard(cand, async (candidateId, toStatus) => {
-        // Fire and forget but keep UI consistent by reloading after each change.
-        await api(`/candidates/${candidateId}/status`, {
-          method: 'PATCH',
-          body: JSON.stringify({ toStatus, reason: 'Updated from UI' }),
-        });
-        await loadPipeline(); // simple re-render
-      });
-      list.appendChild(card);
-    }
-    const countEl = document.getElementById(`count-${status}`);
-    if (countEl) countEl.textContent = String(filtered.length);
+function updatePositionFilter(candidates) {
+  const select = document.getElementById('positionFilter');
+  if (!select) return;
+  const prev = select.value || 'all';
+  const opts = positionOptions(candidates);
+
+  select.innerHTML = '';
+  const all = document.createElement('option');
+  all.value = 'all';
+  all.textContent = 'Всі позиції';
+  select.appendChild(all);
+
+  for (const p of opts) {
+    const o = document.createElement('option');
+    o.value = p;
+    o.textContent = p;
+    select.appendChild(o);
   }
-  updateKpis(byStatus);
+
+  select.value = opts.includes(prev) || prev === 'all' ? prev : 'all';
+  selectedPosition = select.value;
+}
+
+function renderCandidatesTable(candidates) {
+  const body = document.getElementById('candidatesBody');
+  if (!body) return;
+  body.innerHTML = '';
+
+  const totalEl = document.getElementById('listTotal');
+  if (totalEl) totalEl.textContent = String(candidates.length);
+
+  if (!candidates.length) {
+    const tr = document.createElement('tr');
+    const td = document.createElement('td');
+    td.colSpan = 8;
+    td.className = 'emptyRow';
+    td.textContent = 'Нічого не знайдено за поточними фільтрами.';
+    tr.appendChild(td);
+    body.appendChild(tr);
+    return;
+  }
+
+  for (const cand of candidates) {
+    const tr = document.createElement('tr');
+
+    const nameTd = document.createElement('td');
+    nameTd.innerHTML = `<div class="mainText">${cand.fullName || '-'}</div><div class="subText">${cand.email || '-'}</div>`;
+
+    const phoneTd = document.createElement('td');
+    phoneTd.textContent = cand.phone || '-';
+
+    const positionTd = document.createElement('td');
+    positionTd.textContent = cand.position || '-';
+
+    const cityTd = document.createElement('td');
+    cityTd.textContent = cand.city || '-';
+
+    const sourceTd = document.createElement('td');
+    sourceTd.textContent = cand.source || '-';
+
+    const dateTd = document.createElement('td');
+    dateTd.textContent = formatDate(cand.createdAt);
+
+    const statusTd = document.createElement('td');
+    const select = document.createElement('select');
+    select.className = `statusSelect status-${cand.status}`;
+    for (const s of STATUSES) {
+      const o = document.createElement('option');
+      o.value = s;
+      o.textContent = STATUS_LABELS[s] || s;
+      if (cand.status === s) o.selected = true;
+      select.appendChild(o);
+    }
+    select.addEventListener('change', async () => {
+      const next = select.value;
+      if (next === cand.status) return;
+      try {
+        await api(`/candidates/${cand.id}/status`, {
+          method: 'PATCH',
+          body: JSON.stringify({ toStatus: next, reason: 'Updated from table UI' }),
+        });
+        await loadCandidatesTable();
+      } catch (e) {
+        console.error(e);
+      }
+    });
+    statusTd.appendChild(select);
+
+    const actionTd = document.createElement('td');
+    const editBtn = document.createElement('button');
+    editBtn.className = 'rowAction';
+    editBtn.type = 'button';
+    editBtn.title = 'Редагувати';
+    editBtn.textContent = '✎';
+    editBtn.addEventListener('click', async () => {
+      const fullName = prompt('ПІБ', cand.fullName || '');
+      if (fullName === null) return;
+      const phone = prompt('Телефон', cand.phone || '');
+      if (phone === null) return;
+      const email = prompt('Email', cand.email || '');
+      if (email === null) return;
+      const city = prompt('Місто', cand.city || '');
+      if (city === null) return;
+      const position = prompt('Позиція', cand.position || '');
+      if (position === null) return;
+      const source = prompt('Джерело', cand.source || '');
+      if (source === null) return;
+      const comment = prompt('Коментар', cand.comment || '');
+      if (comment === null) return;
+
+      try {
+        await api(`/candidates/${cand.id}`, {
+          method: 'PATCH',
+          body: JSON.stringify({
+            fullName: fullName || undefined,
+            phone: phone || undefined,
+            email: email || undefined,
+            city: city || undefined,
+            position: position || undefined,
+            source: source || undefined,
+            comment: comment || undefined,
+          }),
+        });
+        await loadCandidatesTable();
+      } catch (e) {
+        console.error(e);
+      }
+    });
+
+    const taskBtn = document.createElement('button');
+    taskBtn.className = 'rowAction';
+    taskBtn.type = 'button';
+    taskBtn.title = 'Додати задачу';
+    taskBtn.textContent = '⏰';
+    taskBtn.addEventListener('click', async () => {
+      try {
+        await quickCreateTask(cand);
+      } catch (e) {
+        console.error(e);
+      }
+    });
+
+    const archiveBtn = document.createElement('button');
+    archiveBtn.className = 'rowAction';
+    archiveBtn.type = 'button';
+    archiveBtn.title = 'Архівувати';
+    archiveBtn.textContent = '🗑';
+    archiveBtn.addEventListener('click', async () => {
+      const yes = window.confirm(`Архівувати кандидата "${cand.fullName}"?`);
+      if (!yes) return;
+      try {
+        await api(`/candidates/${cand.id}`, { method: 'DELETE' });
+        await loadCandidatesTable();
+      } catch (e) {
+        console.error(e);
+      }
+    });
+
+    actionTd.appendChild(editBtn);
+    actionTd.appendChild(taskBtn);
+    actionTd.appendChild(archiveBtn);
+
+    tr.appendChild(nameTd);
+    tr.appendChild(phoneTd);
+    tr.appendChild(positionTd);
+    tr.appendChild(cityTd);
+    tr.appendChild(sourceTd);
+    tr.appendChild(dateTd);
+    tr.appendChild(statusTd);
+    tr.appendChild(actionTd);
+    body.appendChild(tr);
+  }
+}
+
+function updatePagination(totalItems) {
+  const pageInfo = document.getElementById('pageInfo');
+  const prevBtn = document.getElementById('prevPageBtn');
+  const nextBtn = document.getElementById('nextPageBtn');
+  const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
+  if (currentPage > totalPages) currentPage = totalPages;
+
+  if (pageInfo) pageInfo.textContent = `Сторінка ${currentPage} / ${totalPages}`;
+  if (prevBtn) prevBtn.disabled = currentPage <= 1;
+  if (nextBtn) nextBtn.disabled = currentPage >= totalPages;
+}
+
+function getFilteredSortedCandidates() {
+  const filtered = dashboardCandidates.filter(passFilter);
+  const sorted = [...filtered].sort(compareCandidates);
+  return sorted;
+}
+
+function exportCsv() {
+  const rows = getFilteredSortedCandidates();
+  const columns = ['fullName', 'email', 'phone', 'position', 'city', 'source', 'status', 'createdAt'];
+  const header = ['ПІБ', 'Email', 'Телефон', 'Позиція', 'Місто', 'Джерело', 'Статус', 'Дата'];
+  const esc = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+  const lines = [header.map(esc).join(',')];
+  for (const row of rows) {
+    lines.push(
+      columns
+        .map((k) => (k === 'status' ? STATUS_LABELS[row.status] || row.status : k === 'createdAt' ? formatDate(row.createdAt) : row[k]))
+        .map(esc)
+        .join(','),
+    );
+  }
+  const blob = new Blob([`\uFEFF${lines.join('\n')}`], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = `candidates_${new Date().toISOString().slice(0, 10)}.csv`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
+function refreshCandidatesView() {
+  const sorted = getFilteredSortedCandidates();
+  updatePagination(sorted.length);
+  const start = (currentPage - 1) * PAGE_SIZE;
+  const page = sorted.slice(start, start + PAGE_SIZE);
+  renderCandidatesTable(page);
+  updateKpis(dashboardCandidates);
+}
+
+async function loadCandidatesTable() {
+  dashboardUser = await api('/auth/me');
+  document.getElementById('subline').textContent = `Ви: ${dashboardUser.email} (${dashboardUser.role})`;
 
   const loading = document.getElementById('loading');
+  if (loading) loading.style.display = 'block';
+
+  const chunks = await Promise.all(
+    STATUSES.map((status) =>
+      api(`/candidates?status=${encodeURIComponent(status)}&recruiterId=${encodeURIComponent(dashboardUser.id)}`),
+    ),
+  );
+  dashboardCandidates = chunks.flat();
+  updatePositionFilter(dashboardCandidates);
+  currentPage = 1;
+  refreshCandidatesView();
+
   if (loading) loading.style.display = 'none';
 }
 
@@ -257,28 +442,66 @@ function bindLogout() {
   });
 }
 
-function bindFilters() {
-  const chips = document.querySelectorAll('.chip[data-filter]');
-  chips.forEach((chip) => {
-    chip.addEventListener('click', async () => {
-      const next = chip.getAttribute('data-filter') || 'all';
-      activeFilter = next;
-      chips.forEach((el) => el.classList.remove('active'));
-      chip.classList.add('active');
-      const loading = document.getElementById('loading');
-      if (loading) loading.style.display = 'block';
-      await loadPipeline();
-    });
-  });
-}
-
 function bindSearch() {
   const input = document.getElementById('searchInput');
   if (!input) return;
-  input.addEventListener('input', async (e) => {
+  input.addEventListener('input', (e) => {
     searchTerm = (e.target.value || '').trim();
-    await loadPipeline();
+    currentPage = 1;
+    refreshCandidatesView();
   });
+}
+
+function bindDashboardFilters() {
+  const statusFilter = document.getElementById('statusFilter');
+  if (statusFilter) {
+    statusFilter.addEventListener('change', () => {
+      selectedStatus = statusFilter.value || 'all';
+      currentPage = 1;
+      refreshCandidatesView();
+    });
+  }
+  const positionFilter = document.getElementById('positionFilter');
+  if (positionFilter) {
+    positionFilter.addEventListener('change', () => {
+      selectedPosition = positionFilter.value || 'all';
+      currentPage = 1;
+      refreshCandidatesView();
+    });
+  }
+
+  const sortFilter = document.getElementById('sortFilter');
+  if (sortFilter) {
+    sortFilter.addEventListener('change', () => {
+      sortBy = sortFilter.value || 'createdAt:desc';
+      currentPage = 1;
+      refreshCandidatesView();
+    });
+  }
+
+  const prevBtn = document.getElementById('prevPageBtn');
+  if (prevBtn) {
+    prevBtn.addEventListener('click', () => {
+      if (currentPage > 1) {
+        currentPage -= 1;
+        refreshCandidatesView();
+      }
+    });
+  }
+  const nextBtn = document.getElementById('nextPageBtn');
+  if (nextBtn) {
+    nextBtn.addEventListener('click', () => {
+      currentPage += 1;
+      refreshCandidatesView();
+    });
+  }
+
+  const exportBtn = document.getElementById('exportCsvBtn');
+  if (exportBtn) {
+    exportBtn.addEventListener('click', () => {
+      exportCsv();
+    });
+  }
 }
 
 function bindCandidatePage() {
@@ -298,6 +521,7 @@ function bindCandidatePage() {
         fullName: document.getElementById('pFullName').value,
         phone: document.getElementById('pPhone').value,
         email: document.getElementById('pEmail').value || undefined,
+        position: document.getElementById('pPosition').value || undefined,
         city: document.getElementById('pCity').value || undefined,
         source: document.getElementById('pSource').value || undefined,
         comment: document.getElementById('pComment').value || undefined,
@@ -318,8 +542,8 @@ async function init() {
   // Detect page by existing elements.
   const loginForm = document.getElementById('loginForm');
   bindLogout();
-  bindFilters();
   bindSearch();
+  bindDashboardFilters();
   bindCandidatePage();
 
   if (loginForm) {
@@ -332,8 +556,8 @@ async function init() {
 
   try {
     // dashboard only
-    if (document.getElementById('board')) {
-      await loadPipeline();
+    if (document.getElementById('candidatesBody')) {
+      await loadCandidatesTable();
     }
   } catch (e) {
     setError(String(e?.message || e));

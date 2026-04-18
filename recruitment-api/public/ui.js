@@ -45,5 +45,32 @@ function setActiveNav(href) {
   });
 }
 
-window.UI = { initStarsAndParticles, initClock, setActiveNav };
+function getSavedTheme() {
+  return localStorage.getItem('uiTheme') || 'dark';
+}
+
+function applyTheme(theme) {
+  const next = theme === 'soft' ? 'soft' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('uiTheme', next);
+  document.querySelectorAll('[data-theme-toggle]').forEach((btn) => {
+    btn.textContent = next === 'soft' ? 'Dark' : 'Soft';
+    btn.setAttribute('aria-label', next === 'soft' ? 'Switch to dark theme' : 'Switch to soft theme');
+    btn.title = next === 'soft' ? 'Перемкнути на Dark' : 'Перемкнути на Soft';
+  });
+}
+
+function initThemeToggle() {
+  applyTheme(getSavedTheme());
+  document.querySelectorAll('[data-theme-toggle]').forEach((btn) => {
+    if (btn.dataset.boundThemeToggle === '1') return;
+    btn.dataset.boundThemeToggle = '1';
+    btn.addEventListener('click', () => {
+      const current = document.documentElement.getAttribute('data-theme') || 'dark';
+      applyTheme(current === 'soft' ? 'dark' : 'soft');
+    });
+  });
+}
+
+window.UI = { initStarsAndParticles, initClock, setActiveNav, initThemeToggle };
 

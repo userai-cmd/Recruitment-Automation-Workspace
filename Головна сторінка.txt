@@ -1,0 +1,431 @@
+
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Робоче місце рекрутера</title>
+  <style>
+    :root {
+      --bg-1:#02050b;--bg-2:#07101b;--bg-3:#0a1830;
+      --line:rgba(107,186,255,0.18);--line-strong:rgba(115,201,255,0.42);
+      --blue:#28a7ff;--blue-2:#62d0ff;--blue-3:#8ee8ff;--neon:#00c8ff;
+      --text:#f4fbff;--muted:#9eb5d6;
+      --max-width:1380px;
+    }
+    *{box-sizing:border-box}html{scroll-behavior:smooth}
+    body{margin:0;min-height:100vh;font-family:Arial,sans-serif;color:var(--text);overflow-x:hidden;
+      background:radial-gradient(circle at 50% 18%,rgba(42,135,255,0.25),transparent 20%),radial-gradient(circle at 12% 20%,rgba(0,174,255,0.13),transparent 24%),radial-gradient(circle at 88% 22%,rgba(0,140,255,0.13),transparent 24%),radial-gradient(circle at 50% 100%,rgba(0,98,255,0.13),transparent 30%),linear-gradient(180deg,#010308 0%,#030812 28%,#05101d 55%,#02060d 100%);position:relative}
+
+    #stars{position:fixed;inset:0;pointer-events:none;z-index:0}
+    .star{position:absolute;border-radius:50%;background:#fff;animation:twinkle var(--d,3s) ease-in-out infinite var(--delay,0s)}
+    @keyframes twinkle{0%,100%{opacity:var(--min,0.15)}50%{opacity:var(--max,0.85)}}
+    #particles{position:fixed;inset:0;pointer-events:none;z-index:0}
+    .particle{position:absolute;width:2px;height:2px;border-radius:50%;background:var(--neon);opacity:0;animation:floatUp var(--d,8s) ease-in infinite var(--delay,0s)}
+    @keyframes floatUp{0%{transform:translateY(100vh) translateX(0);opacity:0}10%{opacity:0.5}90%{opacity:0.2}100%{transform:translateY(-10vh) translateX(var(--dx,0px));opacity:0}}
+
+    body::before,body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:0}
+    body::before{opacity:.42;background:linear-gradient(rgba(100,190,255,0.035) 1px,transparent 1px),linear-gradient(90deg,rgba(100,190,255,0.035) 1px,transparent 1px);background-size:44px 44px;mask-image:radial-gradient(circle at center,black 35%,transparent 90%)}
+    body::after{background:linear-gradient(90deg,transparent 0%,rgba(92,185,255,0.045) 18%,transparent 35%,transparent 65%,rgba(92,185,255,0.045) 82%,transparent 100%),linear-gradient(180deg,transparent 0%,rgba(92,185,255,0.03) 30%,transparent 56%,rgba(92,185,255,0.03) 78%,transparent 100%);opacity:.65}
+
+    .page{position:relative;z-index:1;min-height:100vh;padding:18px 20px 42px}
+    .shell{max-width:var(--max-width);margin:0 auto;position:relative}
+
+    /* NAVBAR */
+    .top-nav{position:relative;display:flex;align-items:center;justify-content:space-between;gap:18px;padding:10px 14px;border:1px solid rgba(106,184,255,0.14);border-radius:18px;background:linear-gradient(180deg,rgba(7,16,31,0.82),rgba(4,12,24,0.72));box-shadow:inset 0 1px 0 rgba(255,255,255,0.03),0 18px 40px rgba(0,0,0,0.28);overflow:hidden;margin-bottom:22px}
+    .top-nav::before{content:"";position:absolute;left:0;right:0;top:0;height:1px;background:linear-gradient(90deg,transparent,rgba(134,219,255,0.75),transparent);opacity:.7}
+    .brand{display:inline-flex;align-items:center;gap:14px;text-decoration:none;min-width:0;transition:filter .25s}
+    .brand:hover{filter:drop-shadow(0 0 12px rgba(0,200,255,0.3))}
+    .brand img{height:50px;width:auto;display:block;filter:drop-shadow(0 0 12px rgba(40,167,255,0.12))}
+    .brand-text{display:flex;flex-direction:column;line-height:1.05}
+    .brand-title{font-size:20px;font-weight:800;letter-spacing:-.3px;color:#fff}
+    .brand-subtitle{font-size:11px;color:#8db6dd;text-transform:uppercase;letter-spacing:1.2px;margin-top:4px}
+    .nav-links{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+    .nav-links a{text-decoration:none;color:#d9eeff;font-size:13px;font-weight:700;padding:11px 16px;border-radius:12px;border:1px solid rgba(103,181,255,0.14);background:rgba(5,14,26,0.54);transition:.25s ease}
+    .nav-links a:hover,.nav-links a.active{border-color:rgba(123,207,255,0.44);background:linear-gradient(180deg,rgba(16,54,100,0.74),rgba(8,24,48,0.82));box-shadow:0 0 18px rgba(40,167,255,0.16);color:#fff}
+    .nav-clock{display:flex;flex-direction:column;align-items:flex-end;padding:6px 14px;border-radius:10px;background:rgba(0,12,35,0.7);border:1px solid rgba(0,150,255,0.2);flex-shrink:0}
+    .nav-clock-time{font-size:16px;font-weight:700;color:#90ccff;letter-spacing:1.5px;font-variant-numeric:tabular-nums}
+    .nav-clock-date{font-size:9px;color:var(--muted);letter-spacing:.4px;margin-top:1px}
+    .status-pill{display:inline-flex;align-items:center;gap:7px;padding:7px 13px;border-radius:999px;background:rgba(0,25,12,0.85);border:1px solid rgba(30,180,80,0.3);font-size:11px;color:#5be88a;flex-shrink:0}
+    .status-dot{width:6px;height:6px;border-radius:50%;background:#4ade80;box-shadow:0 0 8px #4ade80;animation:pulse 2s ease-in-out infinite}
+    @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.55;transform:scale(.8)}}
+
+    /* HERO */
+    .hero{position:relative;min-height:460px;border-radius:34px;overflow:hidden;padding:34px 28px 26px;background:radial-gradient(circle at 50% 20%,rgba(71,168,255,0.16),transparent 16%),radial-gradient(circle at 50% 50%,rgba(25,135,255,0.08),transparent 40%),linear-gradient(180deg,rgba(5,12,24,0.76),rgba(3,9,18,0.88));border:1px solid rgba(104,185,255,0.18);box-shadow:inset 0 1px 0 rgba(255,255,255,0.04),0 30px 90px rgba(0,0,0,0.48)}
+    .hero::before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent 0%,rgba(99,192,255,0.04) 25%,transparent 48%,rgba(99,192,255,0.04) 72%,transparent 100%),linear-gradient(180deg,transparent 0%,rgba(99,192,255,0.045) 22%,transparent 44%,rgba(99,192,255,0.035) 67%,transparent 100%);opacity:.9;pointer-events:none}
+    .hero::after{content:"";position:absolute;left:50%;bottom:28px;transform:translateX(-50%);width:280px;height:34px;border-radius:999px;background:radial-gradient(circle,rgba(112,220,255,0.8),rgba(46,151,255,0.32) 32%,transparent 72%);filter:blur(8px);opacity:.85;pointer-events:none}
+
+    .hero-lines{position:absolute;inset:0;pointer-events:none;z-index:1}
+    .hero-lines .line{position:absolute;background:linear-gradient(90deg,transparent,rgba(108,200,255,0.42),transparent);height:1px;box-shadow:0 0 12px rgba(40,167,255,0.26);opacity:.75}
+    .hero-lines .line.v{width:1px;height:auto;background:linear-gradient(180deg,transparent,rgba(108,200,255,0.34),transparent)}
+    .hero-lines .l1{top:88px;left:40px;width:290px}.hero-lines .l2{top:110px;right:40px;width:290px}.hero-lines .l3{bottom:104px;left:90px;width:220px}.hero-lines .l4{bottom:104px;right:90px;width:220px}.hero-lines .l5{left:26%;top:26px;height:150px}.hero-lines .l6{right:26%;top:26px;height:150px}
+
+    .core-wrap{position:absolute;left:50%;top:52px;transform:translateX(-50%);width:420px;height:170px;z-index:2;pointer-events:none}
+    .core-wrap::before,.core-wrap::after{content:"";position:absolute;top:50%;width:150px;height:2px;transform:translateY(-50%);background:linear-gradient(90deg,transparent,rgba(106,201,255,0.65));box-shadow:0 0 18px rgba(40,167,255,0.22)}
+    .core-wrap::before{left:-92px}.core-wrap::after{right:-92px;transform:translateY(-50%) scaleX(-1)}
+    .core-eye{position:absolute;inset:0;margin:auto;width:100%;height:100%;filter:drop-shadow(0 0 18px rgba(40,167,255,0.18))}
+    .core-eye .outer{position:absolute;inset:16px 40px;border-radius:120px/70px;border:2px solid rgba(122,209,255,0.58);box-shadow:inset 0 0 22px rgba(40,167,255,0.12),0 0 18px rgba(40,167,255,0.12);animation:eyePulse 3s ease-in-out infinite}
+    @keyframes eyePulse{0%,100%{box-shadow:inset 0 0 22px rgba(40,167,255,0.12),0 0 18px rgba(40,167,255,0.12)}50%{box-shadow:inset 0 0 32px rgba(40,167,255,0.22),0 0 32px rgba(40,167,255,0.22)}}
+    .core-eye .outer::before,.core-eye .outer::after{content:"";position:absolute;top:50%;width:72px;height:2px;background:linear-gradient(90deg,rgba(121,210,255,0.7),transparent);transform:translateY(-50%);opacity:.7}
+    .core-eye .outer::before{left:-72px}.core-eye .outer::after{right:-72px;transform:translateY(-50%) scaleX(-1)}
+    .core-eye .mid{position:absolute;inset:34px 118px;border-radius:50%;background:radial-gradient(circle,rgba(186,243,255,0.95) 0 10%,rgba(91,211,255,0.88) 12%,rgba(24,123,255,0.92) 28%,rgba(7,33,77,0.98) 58%,rgba(4,12,24,0.96) 100%);box-shadow:0 0 30px rgba(40,167,255,0.32),inset 0 0 28px rgba(163,236,255,0.16);animation:corePulse 3s ease-in-out infinite}
+    @keyframes corePulse{0%,100%{box-shadow:0 0 30px rgba(40,167,255,0.32),inset 0 0 28px rgba(163,236,255,0.16)}50%{box-shadow:0 0 50px rgba(40,167,255,0.55),inset 0 0 40px rgba(163,236,255,0.28)}}
+    .core-eye .mid::before{content:"";position:absolute;inset:18%;border-radius:50%;border:1px solid rgba(181,240,255,0.46);box-shadow:0 0 12px rgba(40,167,255,0.24)}
+    .core-eye .mid::after{content:"";position:absolute;width:22px;height:22px;top:18%;left:25%;border-radius:50%;background:rgba(255,255,255,0.78);filter:blur(1px)}
+
+    .hero-content{position:relative;z-index:3;padding-top:176px;text-align:center;max-width:900px;margin:0 auto 28px}
+    .eyebrow{display:inline-flex;align-items:center;gap:10px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:#b9e6ff;padding:9px 14px;border-radius:999px;border:1px solid rgba(115,201,255,0.24);background:rgba(8,20,35,0.56);box-shadow:inset 0 0 18px rgba(40,167,255,0.05);margin-bottom:18px}
+    .eyebrow::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--blue-3);box-shadow:0 0 12px var(--blue-2);flex-shrink:0;animation:pulse 2s ease-in-out infinite}
+    .title{margin:0 0 10px;font-size:clamp(40px,5vw,68px);line-height:1;font-weight:900;letter-spacing:-1.2px;color:#fff;text-shadow:0 0 24px rgba(255,255,255,0.06),0 0 28px rgba(40,167,255,0.14)}
+    .subtitle{margin:0 auto;max-width:760px;font-size:17px;line-height:1.7;color:#c6d8ee}
+
+    /* Stats */
+    .hero-stats{display:flex;align-items:center;justify-content:center;gap:28px;margin-top:20px}
+    .hero-stat{text-align:center}
+    .hero-stat-num{font-size:28px;font-weight:800;color:#7dd3fc;line-height:1;min-width:50px;display:inline-block}
+    .hero-stat-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-top:3px}
+    .hero-stat-div{width:1px;height:40px;background:rgba(0,150,255,0.2)}
+    .stat-skeleton{display:inline-block;width:44px;height:28px;border-radius:6px;background:linear-gradient(90deg,rgba(88,183,255,0.08) 25%,rgba(88,183,255,0.18) 50%,rgba(88,183,255,0.08) 75%);background-size:200% 100%;animation:skelShimmer 1.4s infinite;vertical-align:middle}
+    @keyframes skelShimmer{from{background-position:200% center}to{background-position:-200% center}}
+    .stats-error{font-size:11px;color:rgba(255,120,120,0.7);margin-top:8px;text-align:center;display:none}
+
+    /* Search */
+    .hero-search{display:flex;align-items:center;gap:10px;max-width:460px;margin:18px auto 0}
+    .search-box{flex:1;display:flex;align-items:center;gap:10px;background:rgba(5,15,40,0.85);border:1px solid rgba(0,150,255,0.28);border-radius:12px;padding:11px 16px;backdrop-filter:blur(8px);transition:border-color .25s,box-shadow .25s}
+    .search-box:focus-within{border-color:rgba(0,200,255,0.6);box-shadow:0 0 0 3px rgba(0,150,255,0.1),0 0 22px rgba(0,150,255,0.12)}
+    .search-box svg{width:15px;height:15px;stroke:var(--muted);flex-shrink:0;fill:none}
+    .search-box input{background:none;border:none;outline:none;color:var(--text);font-size:14px;width:100%;font-family:inherit}
+    .search-box input::placeholder{color:var(--muted)}
+
+    /* GRID */
+    .grid{position:relative;z-index:3;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:22px;align-items:stretch;margin-top:26px}
+
+    /* CARD */
+    .card{position:relative;display:flex;flex-direction:column;justify-content:space-between;gap:18px;min-height:360px;text-decoration:none;color:var(--text);padding:26px 22px 22px;border-radius:24px;overflow:hidden;background:linear-gradient(180deg,rgba(8,20,38,0.82),rgba(5,14,28,0.92));border:1px solid rgba(116,198,255,0.28);box-shadow:inset 0 0 0 1px rgba(255,255,255,0.02),inset 0 0 26px rgba(40,167,255,0.05),0 18px 46px rgba(0,0,0,0.4),0 0 18px rgba(40,167,255,0.08);transition:transform .28s ease,box-shadow .28s ease,border-color .28s ease;isolation:isolate;backdrop-filter:blur(3px)}
+    .card::before{content:"";position:absolute;inset:0;background:linear-gradient(135deg,rgba(114,220,255,0.16),transparent 26%,transparent 72%,rgba(114,220,255,0.08)),radial-gradient(circle at 50% 0%,rgba(60,177,255,0.18),transparent 34%);opacity:.95;z-index:-2}
+    .card::after{content:"";position:absolute;inset:12px;border-radius:18px;border:1px solid rgba(149,226,255,0.18);pointer-events:none;z-index:-1}
+    .shimmer{position:absolute;inset:0;z-index:0;border-radius:inherit;overflow:hidden;pointer-events:none}
+    .shimmer::after{content:"";position:absolute;top:-50%;left:-75%;width:50%;height:200%;background:linear-gradient(105deg,transparent,rgba(100,200,255,0.09),transparent);transform:skewX(-15deg);transition:left .6s ease}
+    .card:hover .shimmer::after{left:130%}
+    .card:hover{transform:translateY(-8px);border-color:rgba(141,223,255,0.56);box-shadow:inset 0 0 0 1px rgba(255,255,255,0.03),inset 0 0 36px rgba(40,167,255,0.08),0 28px 58px rgba(0,0,0,0.5),0 0 28px rgba(40,167,255,0.14)}
+
+    .card-top{display:flex;justify-content:center;align-items:center;min-height:110px;padding-top:6px;position:relative}
+    .icon-wrap{width:102px;height:102px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:radial-gradient(circle at 35% 30%,rgba(163,236,255,0.15),rgba(13,50,94,0.88) 42%,rgba(4,18,38,0.96) 100%);border:1px solid rgba(126,213,255,0.28);box-shadow:inset 0 0 22px rgba(152,229,255,0.08),0 0 20px rgba(40,167,255,0.18),0 16px 30px rgba(0,0,0,0.28);position:relative;transition:transform .3s ease,box-shadow .3s ease}
+    .icon-wrap::before,.icon-wrap::after{content:"";position:absolute;border-radius:50%;inset:9px;border:1px solid rgba(135,218,255,0.12)}
+    .icon-wrap::after{inset:-10px;border:1px solid rgba(135,218,255,0.08)}
+    .card:hover .icon-wrap{transform:rotate(-5deg) scale(1.08);box-shadow:inset 0 0 28px rgba(152,229,255,0.14),0 0 34px rgba(40,167,255,0.32),0 16px 30px rgba(0,0,0,0.28)}
+    .icon{width:42px;height:42px;stroke:#bff2ff;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 8px rgba(40,167,255,0.22))}
+
+    .notif-badge{position:absolute;top:2px;right:calc(50% - 68px);width:20px;height:20px;border-radius:50%;background:#ef4444;font-size:10px;font-weight:700;color:#fff;display:flex;align-items:center;justify-content:center;border:2px solid #02060d;box-shadow:0 0 10px rgba(239,68,68,.6);animation:badgePop .4s cubic-bezier(.34,1.56,.64,1) both .9s}
+    @keyframes badgePop{from{transform:scale(0)}to{transform:scale(1)}}
+
+    .card-progress{height:2px;border-radius:999px;background:rgba(0,150,255,0.12);margin-top:10px;overflow:hidden}
+    .card-progress-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--blue),var(--neon));box-shadow:0 0 8px rgba(0,200,255,0.4);transition:width 1.3s cubic-bezier(.4,0,.2,1)}
+
+    .card-tooltip{position:absolute;top:10px;left:50%;transform:translateX(-50%) translateY(4px);background:rgba(0,8,25,0.96);border:1px solid rgba(0,180,255,0.3);border-radius:8px;padding:5px 12px;font-size:11px;color:#80c0ff;white-space:nowrap;pointer-events:none;z-index:20;opacity:0;transition:opacity .2s,transform .2s}
+    .card:hover .card-tooltip{opacity:1;transform:translateX(-50%) translateY(0)}
+
+    .card-body{text-align:center}
+    .card-title{margin:0 0 12px;font-size:24px;font-weight:900;line-height:1.15;letter-spacing:-.3px;color:#fff;text-shadow:0 0 18px rgba(40,167,255,0.1)}
+    .card-text{margin:0 auto;max-width:92%;font-size:15px;line-height:1.65;color:var(--muted)}
+    .card-footer{padding-top:14px;border-top:1px solid rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:center;gap:10px;color:#c8ebff;font-size:14px;font-weight:700;letter-spacing:.2px}
+    .arrow{width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;border-radius:10px;background:rgba(11,28,50,0.75);border:1px solid rgba(130,213,255,0.2);box-shadow:0 0 14px rgba(40,167,255,0.08);transition:.25s ease}
+    .arrow svg{width:16px;height:16px;stroke:#9fe5ff;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round}
+    .card:hover .arrow{transform:translateX(3px);box-shadow:0 0 16px rgba(40,167,255,0.18);border-color:rgba(130,213,255,0.38)}
+
+    .footer-note{margin-top:20px;text-align:center;color:#7ea0c5;font-size:13px;letter-spacing:.35px;text-transform:uppercase}
+    .footer-note span{color:rgba(0,180,255,0.3);margin:0 8px}
+
+    .fade-up{animation:fadeUp .7s ease both}
+    .delay-1{animation-delay:.08s}.delay-2{animation-delay:.16s}.delay-3{animation-delay:.24s}.delay-4{animation-delay:.32s}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+
+    @media(max-width:1180px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.hero{min-height:auto}.core-wrap{width:360px;height:150px}.hero-content{padding-top:162px}}
+    @media(max-width:760px){
+      .page{padding:14px 12px 30px}.top-nav{padding:10px;border-radius:16px}
+      .brand img{height:42px}.brand-title{font-size:16px}.brand-subtitle{font-size:10px}
+      .nav-links{display:none}.nav-clock{display:none}.status-pill{display:none}
+      .hero{padding:22px 14px 18px;border-radius:24px}
+      .hero-lines .l1,.hero-lines .l2,.hero-lines .l3,.hero-lines .l4,.hero-lines .l5,.hero-lines .l6{display:none}
+      .core-wrap{width:270px;height:120px;top:34px}.core-eye .outer{inset:12px 20px}.core-eye .mid{inset:25px 82px}
+      .hero-content{padding-top:120px;margin-bottom:20px}.eyebrow{font-size:11px;padding:8px 12px}.title{font-size:34px}.subtitle{font-size:14px}
+      .grid{grid-template-columns:1fr;gap:16px;margin-top:18px}.card{min-height:290px;padding:22px 18px 18px;border-radius:20px}
+      .icon-wrap{width:88px;height:88px}.icon{width:36px;height:36px}.card-title{font-size:22px}.card-text{font-size:14px}
+      .hero-stats{gap:16px}.hero-search{max-width:100%}
+    }
+  </style>
+</head>
+<body>
+  <div id="stars"></div>
+  <div id="particles"></div>
+
+  <div class="page">
+    <div class="shell">
+
+      <!-- NAVBAR -->
+      <nav class="top-nav fade-up">
+        <a class="brand" href="https://n8n-bogdanm.up.railway.app/webhook/recruiter-home">
+          <img src="https://raw.githubusercontent.com/bogdanharpoonn-eng/Foto-logo/main/big_dnipro_logo_final.png" alt="BiG Dnipro Automation Logo"
+            onerror="this.onerror=null;this.src='https://cdn.jsdelivr.net/gh/bogdanharpoonn-eng/Foto-logo@main/big_dnipro_logo_final.png';"/>
+          <span class="brand-text">
+            <span class="brand-title">BiG Dnipro</span>
+            <span class="brand-subtitle">Automation Control Panel</span>
+          </span>
+        </a>
+        <div class="nav-links">
+          <a class="active" href="https://n8n-bogdanm.up.railway.app/webhook/recruiter-home">Головна</a>
+          <a href="https://n8n-bogdanm.up.railway.app/webhook/recruiter-panel">Анкета кандидата</a>
+          <a href="https://n8n-bogdanm.up.railway.app/webhook/recruiter-candidates">Кандидати</a>
+          <a href="https://n8n-bogdanm.up.railway.app/webhook/recruiter-kpi">КПІ</a>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="status-pill"><div class="status-dot"></div>Система активна</div>
+          <div class="nav-clock">
+            <div class="nav-clock-time" id="clock">--:--:--</div>
+            <div class="nav-clock-date" id="clock-date">—</div>
+          </div>
+        </div>
+      </nav>
+
+      <!-- HERO -->
+      <section class="hero fade-up delay-1">
+        <div class="hero-lines" aria-hidden="true">
+          <span class="line l1"></span><span class="line l2"></span>
+          <span class="line l3"></span><span class="line l4"></span>
+          <span class="line v l5"></span><span class="line v l6"></span>
+        </div>
+        <div class="core-wrap" aria-hidden="true">
+          <div class="core-eye"><div class="outer"></div><div class="mid"></div></div>
+        </div>
+
+        <div class="hero-content">
+          <div class="eyebrow">Recruitment Automation Workspace</div>
+          <h1 class="title">Вітаємо<br>в системі рекрутингу</h1>
+          <p class="subtitle">Єдиний центр керування рекрутингом: додавання кандидата, база даних, KPI та статистика воронки в сильному futuristic-інтерфейсі.</p>
+
+          <!-- Stats — реальні дані з n8n -->
+          <div class="hero-stats">
+            <div class="hero-stat">
+              <div class="hero-stat-num" id="stat-c"><span class="stat-skeleton"></span></div>
+              <div class="hero-stat-lbl">Кандидатів</div>
+            </div>
+            <div class="hero-stat-div"></div>
+            <div class="hero-stat">
+              <div class="hero-stat-num" id="stat-t"><span class="stat-skeleton"></span></div>
+              <div class="hero-stat-lbl">Сьогодні</div>
+            </div>
+            <div class="hero-stat-div"></div>
+            <div class="hero-stat">
+              <div class="hero-stat-num" id="stat-a"><span class="stat-skeleton"></span></div>
+              <div class="hero-stat-lbl">Активних</div>
+            </div>
+          </div>
+          <div class="stats-error" id="stats-error">⚠ Не вдалося завантажити статистику</div>
+
+          <div class="hero-search">
+            <div class="search-box">
+              <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
+              <input type="text" placeholder="Пошук по модулях…" aria-label="Пошук"/>
+            </div>
+          </div>
+        </div>
+
+        <!-- CARDS -->
+        <div class="grid">
+          <a class="card fade-up delay-1" href="https://n8n-bogdanm.up.railway.app/webhook/recruiter-panel">
+            <div class="shimmer"></div>
+            <div class="card-tooltip">Відкрити форму анкети</div>
+            <div class="card-top">
+              <div class="icon-wrap" style="position:relative">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M8 3h8"/><path d="M9 2h6v3H9z"/>
+                  <path d="M7 5h10a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z"/>
+                  <path d="M9 10h6"/><path d="M9 14h6"/><path d="M9 18h4"/>
+                </svg>
+                <div class="notif-badge" id="badge-new">—</div>
+              </div>
+            </div>
+            <div class="card-body">
+              <h2 class="card-title">Анкета<br>кандидата</h2>
+              <p class="card-text">Додавання нового кандидата в систему зі швидким переходом до заповнення анкети.</p>
+              <div class="card-progress"><div class="card-progress-fill" style="width:0%" data-w="72%"></div></div>
+            </div>
+            <div class="card-footer">
+              <span>Відкрити модуль</span>
+              <span class="arrow"><svg viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg></span>
+            </div>
+          </a>
+
+          <a class="card fade-up delay-2" href="https://n8n-bogdanm.up.railway.app/webhook/recruiter-candidates">
+            <div class="shimmer"></div>
+            <div class="card-tooltip">База кандидатів</div>
+            <div class="card-top">
+              <div class="icon-wrap">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/>
+                  <circle cx="9" cy="7" r="4"/>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                </svg>
+              </div>
+            </div>
+            <div class="card-body">
+              <h2 class="card-title">Дані по<br>кандидатах</h2>
+              <p class="card-text">Перегляд, фільтрація та аналіз кандидатів для швидкої оцінки поточного стану бази.</p>
+              <div class="card-progress"><div class="card-progress-fill" style="width:0%" data-w="55%"></div></div>
+            </div>
+            <div class="card-footer">
+              <span>Перейти до списку</span>
+              <span class="arrow"><svg viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg></span>
+            </div>
+          </a>
+
+          <a class="card fade-up delay-3" href="https://n8n-bogdanm.up.railway.app/webhook/recruiter-kpi">
+            <div class="shimmer"></div>
+            <div class="card-tooltip">Переглянути KPI</div>
+            <div class="card-top">
+              <div class="icon-wrap">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-7"/>
+                </svg>
+              </div>
+            </div>
+            <div class="card-body">
+              <h2 class="card-title">КПІ</h2>
+              <p class="card-text">Розрахунок та контроль показників рекрутера для оцінки результативності роботи.</p>
+              <div class="card-progress"><div class="card-progress-fill" style="width:0%" data-w="88%"></div></div>
+            </div>
+            <div class="card-footer">
+              <span>Переглянути показники</span>
+              <span class="arrow"><svg viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg></span>
+            </div>
+          </a>
+
+          <a class="card fade-up delay-4" href="https://n8n-bogdanm.up.railway.app/webhook/recruiter-stats">
+            <div class="shimmer"></div>
+            <div class="card-tooltip">Аналітика та воронка</div>
+            <div class="card-top">
+              <div class="icon-wrap">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M4 19h16"/><path d="M7 16V9"/><path d="M12 16V5"/><path d="M17 16v-6"/>
+                </svg>
+              </div>
+            </div>
+            <div class="card-body">
+              <h2 class="card-title">Статистика /<br>воронка</h2>
+              <p class="card-text">Аналіз ефективності, конверсій та ключових етапів проходження кандидатів по воронці.</p>
+              <div class="card-progress"><div class="card-progress-fill" style="width:0%" data-w="40%"></div></div>
+            </div>
+            <div class="card-footer">
+              <span>Відкрити аналітику</span>
+              <span class="arrow"><svg viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg></span>
+            </div>
+          </a>
+        </div>
+      </section>
+
+      <div class="footer-note fade-up delay-4">
+        Unified recruiter dashboard<span>•</span>BiG Dnipro Automation<span>•</span><span id="footer-time"></span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* ── Webhook для статистики з Google Sheets ── */
+    const STATS_WEBHOOK = 'https://n8n-bogdanm.up.railway.app/webhook/recruiter-stats-data';
+
+    /* Stars */
+    const starsEl=document.getElementById('stars');
+    for(let i=0;i<100;i++){
+      const s=document.createElement('div');s.className='star';
+      const sz=Math.random()*1.8+0.4;
+      s.style.cssText=`width:${sz}px;height:${sz}px;top:${Math.random()*100}%;left:${Math.random()*100}%;--min:${(Math.random()*.15+.05).toFixed(2)};--max:${(Math.random()*.5+.3).toFixed(2)};--d:${(Math.random()*4+2).toFixed(1)}s;--delay:-${(Math.random()*6).toFixed(1)}s;`;
+      starsEl.appendChild(s);
+    }
+
+    /* Particles */
+    const partEl=document.getElementById('particles');
+    for(let i=0;i<20;i++){
+      const p=document.createElement('div');p.className='particle';
+      p.style.cssText=`left:${Math.random()*100}%;--d:${(Math.random()*10+7).toFixed(1)}s;--delay:-${(Math.random()*10).toFixed(1)}s;--dx:${((Math.random()-.5)*50).toFixed(0)}px;`;
+      partEl.appendChild(p);
+    }
+
+    /* Clock */
+    function updateClock(){
+      const now=new Date(),pad=n=>String(n).padStart(2,'0');
+      const el=document.getElementById('clock');
+      if(el)el.textContent=pad(now.getHours())+':'+pad(now.getMinutes())+':'+pad(now.getSeconds());
+      const days=['Неділя','Понеділок','Вівторок','Середа','Четвер','П\'ятниця','Субота'];
+      const months=['січня','лютого','березня','квітня','травня','червня','липня','серпня','вересня','жовтня','листопада','грудня'];
+      const de=document.getElementById('clock-date');
+      if(de)de.textContent=days[now.getDay()]+', '+now.getDate()+' '+months[now.getMonth()];
+      const ft=document.getElementById('footer-time');
+      if(ft)ft.textContent=pad(now.getHours())+':'+pad(now.getMinutes());
+    }
+    updateClock();setInterval(updateClock,1000);
+
+    /* Animate counter */
+    function animCount(el,target,dur){
+      el.innerHTML='';
+      let v=0;const step=Math.max(1,Math.ceil(target/(dur/16)));
+      const t=setInterval(()=>{v=Math.min(v+step,target);el.textContent=v;if(v>=target)clearInterval(t);},16);
+    }
+
+    /* Реальна статистика з n8n → Google Sheets */
+    async function loadStats(){
+      try{
+        const res=await fetch(STATS_WEBHOOK);
+        if(!res.ok)throw new Error('HTTP '+res.status);
+        const data=await res.json();
+        const c=document.getElementById('stat-c');
+        const t=document.getElementById('stat-t');
+        const a=document.getElementById('stat-a');
+        const badge=document.getElementById('badge-new');
+        if(c)animCount(c,Number(data.total??data.all??0),900);
+        if(t)animCount(t,Number(data.today??0),500);
+        if(a)animCount(a,Number(data.active??0),700);
+        if(badge){
+          const n=Number(data.new_today??data.today??0);
+          badge.textContent=n>0?n:'0';
+          if(n===0)badge.style.background='rgba(88,183,255,0.4)';
+        }
+      }catch(err){
+        ['stat-c','stat-t','stat-a'].forEach(id=>{
+          const el=document.getElementById(id);
+          if(el)el.textContent='—';
+        });
+        const errEl=document.getElementById('stats-error');
+        if(errEl)errEl.style.display='block';
+        console.warn('Stats webhook error:',err);
+      }
+    }
+    loadStats();
+
+    /* Progress bars */
+    document.querySelectorAll('.card-progress-fill').forEach(b=>{
+      const w=b.dataset.w||'0%';
+      setTimeout(()=>{b.style.width=w;},700);
+    });
+
+    /* Search */
+    const inp=document.querySelector('.search-box input');
+    if(inp)inp.addEventListener('input',e=>{
+      const q=e.target.value.toLowerCase();
+      document.querySelectorAll('.card').forEach(card=>{
+        const match=!q||card.textContent.toLowerCase().includes(q);
+        card.style.opacity=match?'1':'0.2';
+        card.style.transform=match?'':'scale(0.97)';
+        card.style.transition='opacity .3s,transform .3s';
+      });
+    });
+
+    /* Nav active */
+    document.querySelectorAll('.nav-links a').forEach(l=>{
+      l.addEventListener('click',()=>{
+        document.querySelectorAll('.nav-links a').forEach(x=>x.classList.remove('active'));
+        l.classList.add('active');
+      });
+    });
+  </script>
+</body>
+</html>
