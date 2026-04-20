@@ -16,6 +16,7 @@ let dashboardCandidates = [];
 let dashboardUser = null;
 let selectedStatus = 'all';
 let selectedPosition = 'all';
+let selectedRecruiterId = '';
 let sortBy = 'createdAt:desc';
 let currentPage = 1;
 const PAGE_SIZE = 10;
@@ -560,13 +561,39 @@ function refreshCandidatesView() {
 async function loadCandidatesTable() {
   dashboardUser = await api('/auth/me');
   document.getElementById('subline').textContent = `Ви: ${dashboardUser.email} (${dashboardUser.role})`;
+  const recruiterFilter = document.getElementById('recruiterFilter');
+  if (dashboardUser.role === 'admin' && recruiterFilter) {
+    const users = await api('/auth/users');
+    const recruiters = users.filter((u) => u.role === 'recruiter');
+    recruiterFilter.style.display = '';
+    recruiterFilter.innerHTML = '<option value="">Всі рекрутери</option>';
+    recruiters.forEach((u) => {
+      const opt = document.createElement('option');
+      opt.value = u.id;
+      opt.textContent = `${u.fullName || u.email}${u.isActive ? '' : ' (inactive)'}`;
+      recruiterFilter.appendChild(opt);
+    });
+    if (!selectedRecruiterId) {
+      const firstActive = recruiters.find((u) => u.isActive);
+      selectedRecruiterId = firstActive?.id || recruiters[0]?.id || '';
+    }
+    recruiterFilter.value = selectedRecruiterId;
+  } else if (recruiterFilter) {
+    recruiterFilter.style.display = 'none';
+    selectedRecruiterId = dashboardUser.id;
+  }
 
   const loading = document.getElementById('loading');
   if (loading) loading.style.display = 'block';
 
+  const targetRecruiterId = dashboardUser.role === 'admin' ? selectedRecruiterId : dashboardUser.id;
   const chunks = await Promise.all(
     STATUSES.map((status) =>
-      api(`/candidates?status=${encodeURIComponent(status)}&recruiterId=${encodeURIComponent(dashboardUser.id)}`),
+      api(
+        `/candidates?status=${encodeURIComponent(status)}${
+          targetRecruiterId ? `&recruiterId=${encodeURIComponent(targetRecruiterId)}` : ''
+        }`,
+      ),
     ),
   );
   dashboardCandidates = chunks.flat();
@@ -620,6 +647,18 @@ function bindDashboardFilters() {
       sortBy = sortFilter.value || 'createdAt:desc';
       currentPage = 1;
       refreshCandidatesView();
+    });
+  }
+  const recruiterFilter = document.getElementById('recruiterFilter');
+  if (recruiterFilter) {
+    recruiterFilter.addEventListener('change', async () => {
+      selectedRecruiterId = recruiterFilter.value || '';
+      currentPage = 1;
+      try {
+        await loadCandidatesTable();
+      } catch (e) {
+        setError(String(e?.message || e));
+      }
     });
   }
 

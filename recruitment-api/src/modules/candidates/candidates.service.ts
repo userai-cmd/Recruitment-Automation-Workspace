@@ -1,8 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateCandidateDto } from './dto/create-candidate.dto';
 import { ChangeStatusDto } from './dto/change-status.dto';
 import { UpdateCandidateDto } from './dto/update-candidate.dto';
+import { JwtUser } from '../../common/decorators/current-user.decorator';
 
 const STATUS_LABELS: Record<string, string> = {
   new: 'Новий',
@@ -164,16 +165,24 @@ export class CandidatesService {
     });
   }
 
-  async findOne(id: string) {
+  private assertCanAccessCandidate(user: JwtUser, candidate: { assignedRecruiterId: string }) {
+    if (user.role === 'admin') return;
+    if (candidate.assignedRecruiterId !== user.id) {
+      throw new ForbiddenException('Access denied for this candidate');
+    }
+  }
+
+  async findOne(id: string, user?: JwtUser) {
     const candidate = await this.prisma.candidate.findUnique({ where: { id } });
     if (!candidate || candidate.isDeleted) {
       throw new NotFoundException('Candidate not found');
     }
+    if (user) this.assertCanAccessCandidate(user, candidate);
     return candidate;
   }
 
-  async changeStatus(id: string, dto: ChangeStatusDto, actorId: string) {
-    const candidate = await this.findOne(id);
+  async changeStatus(id: string, dto: ChangeStatusDto, actor: JwtUser) {
+    const candidate = await this.findOne(id, actor);
 
     return this.prisma.$transaction(async (tx) => {
       const updated = await tx.candidate.update({
@@ -186,7 +195,7 @@ export class CandidatesService {
           candidateId: id,
           fromStatus: candidate.status as any,
           toStatus: dto.toStatus as any,
-          changedByUserId: actorId,
+          changedByUserId: actor.id,
           reason: dto.reason,
         },
       });
@@ -201,7 +210,7 @@ export class CandidatesService {
             toStatus: dto.toStatus,
             reason: dto.reason ?? null,
           } as any,
-          actorUserId: actorId,
+          actorUserId: actor.id,
         },
       });
 
@@ -209,8 +218,8 @@ export class CandidatesService {
     });
   }
 
-  async update(id: string, dto: UpdateCandidateDto, actorId: string) {
-    await this.findOne(id);
+  async update(id: string, dto: UpdateCandidateDto, actor: JwtUser) {
+    await this.findOne(id, actor);
 
     return this.prisma.$transaction(async (tx) => {
       const updated = await tx.candidate.update({
@@ -233,7 +242,7 @@ export class CandidatesService {
           entityId: id,
           action: 'update',
           payload: dto as any,
-          actorUserId: actorId,
+          actorUserId: actor.id,
         },
       });
 
@@ -241,8 +250,8 @@ export class CandidatesService {
     });
   }
 
-  async archive(id: string, actorId: string) {
-    await this.findOne(id);
+  async archive(id: string, actor: JwtUser) {
+    await this.findOne(id, actor);
 
     return this.prisma.$transaction(async (tx) => {
       const updated = await tx.candidate.update({
@@ -256,7 +265,7 @@ export class CandidatesService {
           entityId: id,
           action: 'archive',
           payload: { isDeleted: true } as any,
-          actorUserId: actorId,
+          actorUserId: actor.id,
         },
       });
 

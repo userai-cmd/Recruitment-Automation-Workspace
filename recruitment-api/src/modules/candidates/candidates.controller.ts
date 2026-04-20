@@ -13,15 +13,18 @@ export class CandidatesController {
 
   @Get()
   findAll(
+    @CurrentUser() user: JwtUser,
     @Query('status') status?: string,
     @Query('recruiterId') recruiterId?: string,
   ) {
-    return this.candidatesService.findAll({ status, recruiterId });
+    const effectiveRecruiterId = user.role === 'admin' ? recruiterId : user.id;
+    return this.candidatesService.findAll({ status, recruiterId: effectiveRecruiterId });
   }
 
   @Post()
   create(@Body() dto: CreateCandidateDto, @CurrentUser() user: JwtUser) {
-    return this.candidatesService.create(dto, user.id);
+    const assignedRecruiterId = user.role === 'admin' ? dto.assignedRecruiterId : user.id;
+    return this.candidatesService.create({ ...dto, assignedRecruiterId }, user.id);
   }
 
   @Get('kpi/overview')
@@ -29,8 +32,10 @@ export class CandidatesController {
     @CurrentUser() user: JwtUser,
     @Query('period') period?: string,
     @Query('date') date?: string,
+    @Query('recruiterId') recruiterId?: string,
   ) {
-    return this.candidatesService.getKpiOverview(user.id, period, date);
+    const effectiveRecruiterId = user.role === 'admin' ? recruiterId || user.id : user.id;
+    return this.candidatesService.getKpiOverview(effectiveRecruiterId, period, date);
   }
 
   @Get('motivation/overview')
@@ -38,13 +43,15 @@ export class CandidatesController {
     @CurrentUser() user: JwtUser,
     @Query('period') period?: string,
     @Query('date') date?: string,
+    @Query('recruiterId') recruiterId?: string,
   ) {
-    return this.candidatesService.getMotivationOverview(user.id, period, date);
+    const effectiveRecruiterId = user.role === 'admin' ? recruiterId || user.id : user.id;
+    return this.candidatesService.getMotivationOverview(effectiveRecruiterId, period, date);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.candidatesService.findOne(id);
+  findOne(@Param('id') id: string, @CurrentUser() user: JwtUser) {
+    return this.candidatesService.findOne(id, user);
   }
 
   @Patch(':id')
@@ -53,7 +60,7 @@ export class CandidatesController {
     @Body() dto: UpdateCandidateDto,
     @CurrentUser() user: JwtUser,
   ) {
-    return this.candidatesService.update(id, dto, user.id);
+    return this.candidatesService.update(id, dto, user);
   }
 
   @Patch(':id/status')
@@ -62,11 +69,11 @@ export class CandidatesController {
     @Body() dto: ChangeStatusDto,
     @CurrentUser() user: JwtUser,
   ) {
-    return this.candidatesService.changeStatus(id, dto, user.id);
+    return this.candidatesService.changeStatus(id, dto, user);
   }
 
   @Delete(':id')
   archive(@Param('id') id: string, @CurrentUser() user: JwtUser) {
-    return this.candidatesService.archive(id, user.id);
+    return this.candidatesService.archive(id, user);
   }
 }

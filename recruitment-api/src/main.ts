@@ -33,6 +33,9 @@ async function bootstrap(): Promise<void> {
   expressApp.get('/motivation', (_req: Request, res: Response) =>
     res.sendFile(join(publicDir, 'motivation.html')),
   );
+  expressApp.get('/users', (_req: Request, res: Response) =>
+    res.sendFile(join(publicDir, 'users.html')),
+  );
   expressApp.get('/candidate', (_req: Request, res: Response) =>
     res.sendFile(join(publicDir, 'candidate.html')),
   );

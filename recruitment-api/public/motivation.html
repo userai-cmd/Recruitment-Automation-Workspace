@@ -11,6 +11,7 @@
       .periodBtn,.miniBtn{border:1px solid rgba(103,181,255,.22);border-radius:999px;background:rgba(5,14,26,.6);color:#d9eeff;padding:8px 12px;font-size:12px;font-weight:800;cursor:pointer}
       .periodBtn.active{background:linear-gradient(180deg,rgba(40,167,255,.98),rgba(20,102,214,.96));border-color:rgba(126,213,255,.45)}
       .dateInput{border:1px solid rgba(103,181,255,.22);border-radius:10px;background:rgba(5,14,26,.6);color:#d9eeff;padding:8px 10px;font-size:12px;font-weight:700}
+      .recruiterSelect{border:1px solid rgba(103,181,255,.22);border-radius:10px;background:rgba(5,14,26,.6);color:#d9eeff;padding:8px 10px;font-size:12px;font-weight:700}
       .periodInfo{font-size:12px;color:var(--muted)}
       .cards{display:grid;grid-template-columns:repeat(5,minmax(150px,1fr));gap:12px;margin-bottom:14px}
       .card{border-radius:16px;padding:12px;border:1px solid rgba(116,198,255,.22);background:linear-gradient(180deg,rgba(8,20,38,.82),rgba(5,14,28,.92))}
@@ -49,6 +50,7 @@
             <a href="/dashboard">Кандидати</a>
             <a href="/kpi">КПІ</a>
             <a class="active" href="/motivation">Мотивація</a>
+            <a href="/users">Користувачі</a>
           </div>
           <div style="display:flex;align-items:center;gap:10px">
             <div class="status-pill"><div class="status-dot"></div>Система активна</div>
@@ -71,6 +73,7 @@
         <div class="toolbar">
           <div class="periodBtns" id="periodBtns"></div>
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <select id="recruiterFilter" class="recruiterSelect" style="display:none"></select>
             <button id="prevPeriodBtn" class="miniBtn" type="button">← Попередній</button>
             <input id="anchorDate" class="dateInput" type="date" />
             <button id="nextPeriodBtn" class="miniBtn" type="button">Наступний →</button>
@@ -121,6 +124,7 @@
       const PERIOD_LABELS = { day: 'День', week: 'Тиждень', month: 'Місяць', quarter: 'Квартал', year: 'Рік' };
       let selectedPeriod = localStorage.getItem('motivationPeriod') || 'month';
       let selectedAnchorDate = localStorage.getItem('motivationAnchorDate') || new Date().toISOString().slice(0, 10);
+      let selectedRecruiterId = '';
 
       function authHeaders() {
         const token = localStorage.getItem('accessToken') || '';
@@ -231,8 +235,28 @@
           if (!meRes.ok) throw new Error('auth failed');
           const me = await meRes.json();
           document.getElementById('subline').textContent = `Ви: ${me.email} (${me.role})`;
+          const recruiterFilter = document.getElementById('recruiterFilter');
+          if (me.role === 'admin' && recruiterFilter) {
+            const usersRes = await fetch('/auth/users', { headers });
+            if (!usersRes.ok) throw new Error('users request failed');
+            const users = await usersRes.json();
+            const recruiters = users.filter((u) => u.role === 'recruiter');
+            recruiterFilter.style.display = '';
+            recruiterFilter.innerHTML = recruiters
+              .map((u) => `<option value="${u.id}">${u.fullName || u.email}${u.isActive ? '' : ' (inactive)'}</option>`)
+              .join('');
+            if (!selectedRecruiterId) {
+              const firstActive = recruiters.find((u) => u.isActive);
+              selectedRecruiterId = firstActive?.id || recruiters[0]?.id || '';
+            }
+            recruiterFilter.value = selectedRecruiterId;
+          } else if (recruiterFilter) {
+            recruiterFilter.style.display = 'none';
+            selectedRecruiterId = me.id;
+          }
 
           const query = new URLSearchParams({ period: selectedPeriod, date: selectedAnchorDate });
+          if (selectedRecruiterId) query.set('recruiterId', selectedRecruiterId);
           const res = await fetch(`/candidates/motivation/overview?${query.toString()}`, { headers });
           if (!res.ok) throw new Error('motivation request failed');
           const data = await res.json();
@@ -257,6 +281,13 @@
       window.UI?.initThemeToggle();
       renderPeriodButtons();
       bindDateControls();
+      const recruiterFilter = document.getElementById('recruiterFilter');
+      if (recruiterFilter) {
+        recruiterFilter.addEventListener('change', () => {
+          selectedRecruiterId = recruiterFilter.value || '';
+          loadMotivation();
+        });
+      }
       loadMotivation();
     </script>
   </body>

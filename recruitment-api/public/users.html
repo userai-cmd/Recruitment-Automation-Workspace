@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="uk">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>BiG Dnipro - Користувачі</title>
+    <link rel="stylesheet" href="/ui.css" />
+    <style>
+      .panel{border-radius:18px;padding:14px;border:1px solid rgba(116,198,255,.22);background:linear-gradient(180deg,rgba(8,20,38,.82),rgba(5,14,28,.92))}
+      .panel + .panel{margin-top:12px}
+      .formGrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+      .field{display:grid;gap:6px}
+      .field input,.field select{border:1px solid rgba(103,181,255,.22);border-radius:10px;background:rgba(5,14,26,.6);color:#d9eeff;padding:8px 10px}
+      .btn{border:1px solid rgba(103,181,255,.22);border-radius:10px;background:rgba(5,14,26,.6);color:#d9eeff;padding:8px 10px;font-weight:800;cursor:pointer}
+      .btn.primary{background:linear-gradient(180deg,rgba(40,167,255,.98),rgba(20,102,214,.96))}
+      table{width:100%;border-collapse:collapse}
+      th,td{padding:10px 8px;border-bottom:1px solid rgba(126,213,255,.12);font-size:13px;text-align:left}
+      th{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px}
+      .tag{padding:2px 8px;border-radius:999px;font-size:11px;border:1px solid rgba(126,213,255,.3)}
+      .ok{color:#95f7c0}.off{color:#ffb1b1}
+      @media(max-width:980px){.formGrid{grid-template-columns:1fr 1fr}}
+      @media(max-width:720px){.formGrid{grid-template-columns:1fr}}
+    </style>
+  </head>
+  <body>
+    <div id="stars"></div>
+    <div id="particles"></div>
+    <div class="page">
+      <div class="shell">
+        <nav class="top-nav">
+          <a class="brand" href="/home"><img src="/big_dnipro_logo_final.png" alt="BiG Dnipro Logo" /><span class="brand-text"><span class="brand-title">BiG Dnipro</span><span class="brand-subtitle">Automation Control Panel</span></span></a>
+          <div class="nav-links">
+            <a href="/home">Головна</a>
+            <a href="/candidate">Анкета кандидата</a>
+            <a href="/dashboard">Кандидати</a>
+            <a href="/kpi">КПІ</a>
+            <a href="/motivation">Мотивація</a>
+            <a class="active" href="/users">Користувачі</a>
+          </div>
+        </nav>
+        <section class="hero">
+          <div class="hero-content">
+            <div class="eyebrow">Admin panel</div>
+            <h1 class="title">Користувачі</h1>
+            <p class="subtitle" id="subline">Завантаження...</p>
+          </div>
+        </section>
+        <div class="panel">
+          <form id="createUserForm" class="formGrid">
+            <label class="field">Email<input id="uEmail" type="email" required /></label>
+            <label class="field">ПІБ<input id="uName" type="text" required /></label>
+            <label class="field">Пароль<input id="uPassword" type="text" minlength="6" required /></label>
+            <label class="field">Роль<select id="uRole"><option value="recruiter">recruiter</option><option value="admin">admin</option></select></label>
+            <button class="btn primary" type="submit">Створити</button>
+          </form>
+        </div>
+        <div class="panel">
+          <table>
+            <thead><tr><th>ПІБ</th><th>Email</th><th>Роль</th><th>Статус</th><th>Дія</th></tr></thead>
+            <tbody id="usersBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <script src="/ui.js"></script>
+    <script>
+      function token() { return localStorage.getItem('accessToken') || ''; }
+      async function api(path, options = {}) {
+        const res = await fetch(path, {
+          ...options,
+          headers: { ...(options.body ? { 'Content-Type': 'application/json' } : {}), Authorization: `Bearer ${token()}` },
+        });
+        if (res.status === 401) { localStorage.removeItem('accessToken'); window.location.href = '/'; throw new Error('401'); }
+        if (!res.ok) throw new Error(await res.text() || `${res.status}`);
+        return res.json();
+      }
+      async function loadUsers() {
+        const me = await api('/auth/me');
+        document.getElementById('subline').textContent = `Ви: ${me.email} (${me.role})`;
+        if (me.role !== 'admin') {
+          document.getElementById('usersBody').innerHTML = '<tr><td colspan="5">Доступ лише для admin.</td></tr>';
+          return;
+        }
+        const users = await api('/auth/users');
+        document.getElementById('usersBody').innerHTML = users.map((u) => `
+          <tr>
+            <td>${u.fullName || '-'}</td>
+            <td>${u.email}</td>
+            <td><span class="tag">${u.role}</span></td>
+            <td><span class="${u.isActive ? 'ok' : 'off'}">${u.isActive ? 'active' : 'inactive'}</span></td>
+            <td><button class="btn" data-id="${u.id}" data-active="${u.isActive ? '1' : '0'}">${u.isActive ? 'Деактивувати' : 'Активувати'}</button></td>
+          </tr>
+        `).join('');
+        document.querySelectorAll('#usersBody button[data-id]').forEach((btn) => {
+          btn.addEventListener('click', async () => {
+            const id = btn.getAttribute('data-id');
+            const active = btn.getAttribute('data-active') === '1';
+            await api(`/auth/users/${id}/active`, { method: 'PATCH', body: JSON.stringify({ isActive: !active }) });
+            await loadUsers();
+          });
+        });
+      }
+      document.getElementById('createUserForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await api('/auth/users', {
+          method: 'POST',
+          body: JSON.stringify({
+            email: document.getElementById('uEmail').value,
+            fullName: document.getElementById('uName').value,
+            password: document.getElementById('uPassword').value,
+            role: document.getElementById('uRole').value,
+          }),
+        });
+        e.target.reset();
+        await loadUsers();
+      });
+      window.UI?.initStarsAndParticles();
+      window.UI?.initClock();
+      window.UI?.setActiveNav('/users');
+      window.UI?.initThemeToggle();
+      loadUsers();
+    </script>
+  </body>
+</html>

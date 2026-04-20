@@ -3,6 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../../prisma/prisma.service';
 import { LoginDto } from './dto/login.dto';
+import { UserRole } from '@prisma/client';
 
 @Injectable()
 export class AuthService {
@@ -37,5 +38,55 @@ export class AuthService {
         fullName: user.fullName,
       },
     };
+  }
+
+  async listUsers() {
+    return this.prisma.user.findMany({
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        email: true,
+        fullName: true,
+        role: true,
+        isActive: true,
+        createdAt: true,
+      },
+    });
+  }
+
+  async createRecruiter(email: string, fullName: string, password: string, role: UserRole = 'recruiter') {
+    const passwordHash = await bcrypt.hash(password, 10);
+    return this.prisma.user.create({
+      data: {
+        email: email.trim().toLowerCase(),
+        fullName: fullName.trim(),
+        passwordHash,
+        role,
+        isActive: true,
+      },
+      select: {
+        id: true,
+        email: true,
+        fullName: true,
+        role: true,
+        isActive: true,
+        createdAt: true,
+      },
+    });
+  }
+
+  async setUserActive(userId: string, isActive: boolean) {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: { isActive },
+      select: {
+        id: true,
+        email: true,
+        fullName: true,
+        role: true,
+        isActive: true,
+        createdAt: true,
+      },
+    });
   }
 }
