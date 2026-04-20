@@ -19,6 +19,7 @@
       .card .chg{margin-top:4px;font-size:11px;font-weight:700}
       .chg.up{color:#6ef0a5}.chg.down{color:#ff9aa8}.chg.flat{color:#9eb5d6}
       .panel{border-radius:18px;padding:14px;border:1px solid rgba(116,198,255,.22);background:linear-gradient(180deg,rgba(8,20,38,.82),rgba(5,14,28,.92))}
+      .panel + .panel{margin-top:12px}
       .rules{font-size:13px;color:#c6d8ee;line-height:1.6;margin-bottom:10px}
       table{width:100%;border-collapse:collapse}
       th,td{padding:10px 8px;border-bottom:1px solid rgba(126,213,255,.12);font-size:13px;text-align:left}
@@ -92,6 +93,21 @@
               </tr>
             </thead>
             <tbody id="detailsBody"></tbody>
+          </table>
+        </div>
+
+        <div class="panel">
+          <div class="rules"><strong>Оформлені за рекомендацією</strong> (не входять у бонус +800)</div>
+          <table>
+            <thead>
+              <tr>
+                <th>Дата оформлення</th>
+                <th>Кандидат</th>
+                <th>Джерело</th>
+                <th>Статус нарахування</th>
+              </tr>
+            </thead>
+            <tbody id="referralsBody"></tbody>
           </table>
         </div>
 
@@ -174,6 +190,7 @@
         const ch = fmtChange(summary.totalChangePct || 0);
         const cards = [
           ['Оформлені (не рекомендація)', summary.hiredCount],
+          ['Оформлені (рекомендація)', summary.hiredReferralCount || 0],
           ['Не пройшли СБ', summary.sbFailedCount],
           ['Бонус за оформлених', `${summary.hiredBonus} грн`],
           ['Бонус за СБ', `${summary.sbFailedBonus} грн`],
@@ -192,6 +209,17 @@
         }
         body.innerHTML = details.map((d) =>
           `<tr><td>${fmtDate(d.changedAt)}</td><td>${d.candidateName}</td><td>${d.reason}</td><td class="sum">${d.amount} грн</td></tr>`
+        ).join('');
+      }
+
+      function renderReferrals(referrals) {
+        const body = document.getElementById('referralsBody');
+        if (!referrals || !referrals.length) {
+          body.innerHTML = '<tr><td colspan="4" class="empty">У цьому періоді оформлень за рекомендацією немає.</td></tr>';
+          return;
+        }
+        body.innerHTML = referrals.map((r) =>
+          `<tr><td>${fmtDate(r.changedAt)}</td><td>${r.candidateName}</td><td>${r.source}</td><td class="sum">Виключено з бонусу</td></tr>`
         ).join('');
       }
 
@@ -215,6 +243,7 @@
             `Правила: +${data.rules.hiredBonusPerCandidate} грн за оформленого (крім рекомендації), +${data.rules.sbFailedBonusPerCandidate} грн за кандидата, що не пройшов СБ.`;
           renderSummary(data.summary);
           renderDetails(data.details);
+          renderReferrals(data.referrals);
           const loading = document.getElementById('loading');
           if (loading) loading.style.display = 'none';
         } catch (e) {

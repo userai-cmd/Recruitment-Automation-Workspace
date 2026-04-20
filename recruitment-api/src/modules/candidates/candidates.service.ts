@@ -401,7 +401,9 @@ export class CandidatesService {
     };
     const isReferral = (source?: string | null) => REFERRAL_SOURCES.has((source || '').trim().toLowerCase());
 
-    const currentHiredDistinct = distinctByCandidate(currentHiredRows).filter((r) => !isReferral(r.candidate?.source));
+    const currentHiredDistinctAll = distinctByCandidate(currentHiredRows);
+    const currentHiredReferralDistinct = currentHiredDistinctAll.filter((r) => isReferral(r.candidate?.source));
+    const currentHiredDistinct = currentHiredDistinctAll.filter((r) => !isReferral(r.candidate?.source));
     const currentSbDistinct = distinctByCandidate(currentSbRows);
     const prevHiredDistinct = distinctByCandidate(prevHiredRows).filter((r) => !isReferral(r.candidate?.source));
     const prevSbDistinct = distinctByCandidate(prevSbRows);
@@ -440,6 +442,7 @@ export class CandidatesService {
       },
       summary: {
         hiredCount,
+        hiredReferralCount: currentHiredReferralDistinct.length,
         sbFailedCount,
         hiredBonus,
         sbFailedBonus,
@@ -452,6 +455,15 @@ export class CandidatesService {
         excludeReferralForHired: true,
       },
       details,
+      referrals: currentHiredReferralDistinct
+        .map((row) => ({
+          candidateId: row.candidateId,
+          candidateName: row.candidate?.fullName || 'Кандидат',
+          source: row.candidate?.source || 'Рекомендація',
+          changedAt: row.changedAt.toISOString(),
+          excludedFromBonus: true,
+        }))
+        .sort((a, b) => b.changedAt.localeCompare(a.changedAt)),
     };
   }
 }
