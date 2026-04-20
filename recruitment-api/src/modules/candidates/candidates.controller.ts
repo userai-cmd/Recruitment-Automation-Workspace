@@ -25,8 +25,12 @@ export class CandidatesController {
   }
 
   @Get('kpi/overview')
-  getKpiOverview(@CurrentUser() user: JwtUser) {
-    return this.candidatesService.getKpiOverview(user.id);
+  getKpiOverview(
+    @CurrentUser() user: JwtUser,
+    @Query('period') period?: string,
+    @Query('date') date?: string,
+  ) {
+    return this.candidatesService.getKpiOverview(user.id, period, date);
   }
 
   @Get(':id')

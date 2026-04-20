@@ -11,8 +11,18 @@
         background:linear-gradient(180deg,rgba(8,20,38,.82),rgba(5,14,28,.92));box-shadow:inset 0 1px 0 rgba(255,255,255,.03),0 18px 40px rgba(0,0,0,.28)}
       .summaryCard .v{font-size:28px;font-weight:900;line-height:1}
       .summaryCard .l{margin-top:6px;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px}
+      .summaryCard .chg{margin-top:5px;font-size:11px;font-weight:700}
+      .summaryCard .chg.up{color:#6ef0a5}
+      .summaryCard .chg.down{color:#ff9aa8}
+      .summaryCard .chg.flat{color:#9eb5d6}
       .summaryCard.c1 .v{color:#89d1ff}.summaryCard.c2 .v{color:#8cf0c1}.summaryCard.c3 .v{color:#cde68b}
       .summaryCard.c4 .v{color:#c6a4ff}.summaryCard.c5 .v{color:#ffd199}.summaryCard.c6 .v{color:#ffb8c3}
+
+      .kpiFilters{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 14px}
+      .periodBtns{display:flex;gap:8px;flex-wrap:wrap}
+      .periodBtn{border:1px solid rgba(103,181,255,.22);border-radius:999px;background:rgba(5,14,26,.6);color:#d9eeff;padding:8px 12px;font-size:12px;font-weight:800;cursor:pointer}
+      .periodBtn.active{background:linear-gradient(180deg,rgba(40,167,255,.98),rgba(20,102,214,.96));border-color:rgba(126,213,255,.45)}
+      .periodInfo{font-size:12px;color:var(--muted)}
 
       .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
       .panel{border-radius:20px;padding:14px;border:1px solid rgba(116,198,255,.22);
@@ -47,7 +57,7 @@
       .core-eye .mid{inset:25px 82px;opacity:.82}
       .hero-content{padding-top:118px}
       @media(max-width:1200px){.summaryRow{grid-template-columns:repeat(3,minmax(130px,1fr))}}
-      @media(max-width:920px){.grid{grid-template-columns:1fr}.summaryRow{grid-template-columns:repeat(2,minmax(130px,1fr))}}
+      @media(max-width:920px){.grid{grid-template-columns:1fr}.summaryRow{grid-template-columns:repeat(2,minmax(130px,1fr))}.kpiFilters{flex-direction:column;align-items:flex-start}}
     </style>
   </head>
   <body>
@@ -90,6 +100,10 @@
           </div>
         </section>
 
+        <div class="kpiFilters">
+          <div class="periodBtns" id="periodBtns"></div>
+          <div class="periodInfo" id="periodInfo"></div>
+        </div>
         <div class="summaryRow" id="summaryRow"></div>
 
         <div class="grid">
@@ -145,20 +159,64 @@
         if (loading) loading.style.display = 'none';
       }
 
-      function card(label, value, cls, suffix = '') {
-        return `<div class="summaryCard ${cls}"><div class="v">${value}${suffix}</div><div class="l">${label}</div></div>`;
+      function fmtChange(v) {
+        if (v > 0) return { text: `+${v}%`, cls: 'up' };
+        if (v < 0) return { text: `${v}%`, cls: 'down' };
+        return { text: '0%', cls: 'flat' };
+      }
+
+      function card(label, value, cls, changePct, suffix = '') {
+        const ch = fmtChange(changePct ?? 0);
+        return `<div class="summaryCard ${cls}"><div class="v">${value}${suffix}</div><div class="l">${label}</div><div class="chg ${ch.cls}">${ch.text} vs попер. період</div></div>`;
       }
 
       function renderSummary(summary) {
         const row = document.getElementById('summaryRow');
         row.innerHTML = [
-          card('Всього', summary.total, 'c1'),
-          card('Оформлені', summary.hired, 'c2'),
-          card('Конверсія', summary.conversion, 'c3', '%'),
-          card('Співбесіда', summary.interview, 'c4'),
-          card('Відхилені', summary.rejected, 'c5'),
-          card('Відсів', summary.rejectionRate, 'c6', '%'),
+          card('Всього подій', summary.total, 'c1', summary.totalChangePct),
+          card('Оформлені', summary.hired, 'c2', summary.hiredChangePct),
+          card('Конверсія', summary.conversion, 'c3', summary.conversionChangePct, '%'),
+          card('Співбесіда', summary.interview, 'c4', summary.interviewChangePct),
+          card('Відхилені', summary.rejected, 'c5', summary.rejectedChangePct),
+          card('Відсів', summary.rejectionRate, 'c6', summary.rejectionRateChangePct, '%'),
         ].join('');
+      }
+
+      const PERIOD_LABELS = {
+        day: 'День',
+        week: 'Тиждень',
+        month: 'Місяць',
+        quarter: 'Квартал',
+        year: 'Рік',
+      };
+      let selectedPeriod = localStorage.getItem('kpiPeriod') || 'month';
+
+      function fmtDate(iso) {
+        return new Date(iso).toLocaleDateString('uk-UA');
+      }
+
+      function renderPeriodInfo(period) {
+        const root = document.getElementById('periodInfo');
+        if (!root || !period) return;
+        const toIncl = new Date(new Date(period.to).getTime() - 1);
+        root.textContent = `Період: ${fmtDate(period.from)} - ${toIncl.toLocaleDateString('uk-UA')}`;
+      }
+
+      function renderPeriodButtons() {
+        const root = document.getElementById('periodBtns');
+        if (!root) return;
+        const periods = ['day', 'week', 'month', 'quarter', 'year'];
+        root.innerHTML = periods
+          .map((p) => `<button type="button" class="periodBtn ${selectedPeriod === p ? 'active' : ''}" data-period="${p}">${PERIOD_LABELS[p]}</button>`)
+          .join('');
+        root.querySelectorAll('.periodBtn').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            selectedPeriod = btn.dataset.period || 'month';
+            localStorage.setItem('kpiPeriod', selectedPeriod);
+            renderPeriodButtons();
+            loadKpi();
+          });
+        });
       }
 
       function renderFunnel(data) {
@@ -212,11 +270,12 @@
           const me = await meRes.json();
           document.getElementById('subline').textContent = `Ви: ${me.email} (${me.role})`;
 
-          const res = await fetch('/candidates/kpi/overview', { headers });
+          const res = await fetch(`/candidates/kpi/overview?period=${encodeURIComponent(selectedPeriod)}`, { headers });
           if (!res.ok) throw new Error('kpi request failed');
           const data = await res.json();
 
           renderSummary(data.summary);
+          renderPeriodInfo(data.period);
           renderFunnel(data.funnel);
           renderDonut(data.byStatus);
           renderBars('sourceBars', data.bySource);
@@ -233,6 +292,7 @@
       window.UI?.initClock();
       window.UI?.setActiveNav('/kpi');
       window.UI?.initThemeToggle();
+      renderPeriodButtons();
       loadKpi();
     </script>
   </body>

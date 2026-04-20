@@ -14,10 +14,117 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 const STATUS_ORDER = ['new', 'contacted', 'interview', 'offer', 'hired', 'rejected'];
+const KPI_PERIODS = ['day', 'week', 'month', 'quarter', 'year'] as const;
+type KpiPeriod = (typeof KPI_PERIODS)[number];
 
 @Injectable()
 export class CandidatesService {
   constructor(private readonly prisma: PrismaService) {}
+
+  private parsePeriod(period?: string): KpiPeriod {
+    if (period && KPI_PERIODS.includes(period as KpiPeriod)) {
+      return period as KpiPeriod;
+    }
+    return 'month';
+  }
+
+  private parseAnchorDate(input?: string): Date {
+    if (!input) return new Date();
+    const parsed = new Date(input);
+    if (Number.isNaN(parsed.getTime())) return new Date();
+    return parsed;
+  }
+
+  private startOfDayUtc(date: Date) {
+    return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), 0, 0, 0, 0));
+  }
+
+  private addDaysUtc(date: Date, days: number) {
+    const copy = new Date(date);
+    copy.setUTCDate(copy.getUTCDate() + days);
+    return copy;
+  }
+
+  private getRange(period: KpiPeriod, anchorDate: Date) {
+    const dayStart = this.startOfDayUtc(anchorDate);
+    if (period === 'day') {
+      return { from: dayStart, to: this.addDaysUtc(dayStart, 1) };
+    }
+    if (period === 'week') {
+      // Monday-based week.
+      const day = dayStart.getUTCDay(); // 0=Sun..6=Sat
+      const mondayOffset = (day + 6) % 7;
+      const from = this.addDaysUtc(dayStart, -mondayOffset);
+      return { from, to: this.addDaysUtc(from, 7) };
+    }
+    if (period === 'month') {
+      const from = new Date(Date.UTC(dayStart.getUTCFullYear(), dayStart.getUTCMonth(), 1, 0, 0, 0, 0));
+      return { from, to: new Date(Date.UTC(from.getUTCFullYear(), from.getUTCMonth() + 1, 1, 0, 0, 0, 0)) };
+    }
+    if (period === 'quarter') {
+      const quarterStartMonth = Math.floor(dayStart.getUTCMonth() / 3) * 3;
+      const from = new Date(Date.UTC(dayStart.getUTCFullYear(), quarterStartMonth, 1, 0, 0, 0, 0));
+      return { from, to: new Date(Date.UTC(from.getUTCFullYear(), from.getUTCMonth() + 3, 1, 0, 0, 0, 0)) };
+    }
+    const from = new Date(Date.UTC(dayStart.getUTCFullYear(), 0, 1, 0, 0, 0, 0));
+    return { from, to: new Date(Date.UTC(dayStart.getUTCFullYear() + 1, 0, 1, 0, 0, 0, 0)) };
+  }
+
+  private previousRange(from: Date, to: Date) {
+    const duration = to.getTime() - from.getTime();
+    return {
+      from: new Date(from.getTime() - duration),
+      to: new Date(from.getTime()),
+    };
+  }
+
+  private percentChange(current: number, previous: number) {
+    if (!previous) return current ? 100 : 0;
+    return Math.round(((current - previous) / previous) * 100);
+  }
+
+  private async computeSummaryForRange(recruiterId: string, from: Date, to: Date) {
+    const [createdCount, changedRows] = await Promise.all([
+      this.prisma.candidate.count({
+        where: {
+          assignedRecruiterId: recruiterId,
+          isDeleted: false,
+          createdAt: { gte: from, lt: to },
+        },
+      }),
+      this.prisma.candidateStatusHistory.findMany({
+        where: {
+          changedByUserId: recruiterId,
+          changedAt: { gte: from, lt: to },
+        },
+        select: { toStatus: true },
+      }),
+    ]);
+
+    const byStatus = Object.fromEntries(STATUS_ORDER.map((s) => [s, 0])) as Record<string, number>;
+    byStatus.new += createdCount;
+    for (const row of changedRows) {
+      const status = String(row.toStatus);
+      if (byStatus[status] !== undefined) byStatus[status] += 1;
+    }
+
+    const total = createdCount + changedRows.length;
+    const hired = byStatus.hired || 0;
+    const rejected = byStatus.rejected || 0;
+    const interview = byStatus.interview || 0;
+    const conversion = total ? Math.round((hired / total) * 100) : 0;
+    const rejectionRate = total ? Math.round((rejected / total) * 100) : 0;
+
+    return {
+      total,
+      hired,
+      interview,
+      rejected,
+      conversion,
+      rejectionRate,
+      byStatus,
+    };
+  }
 
   findAll(query: { status?: string; recruiterId?: string }) {
     return this.prisma.candidate.findMany({
@@ -153,47 +260,36 @@ export class CandidatesService {
     });
   }
 
-  async getKpiOverview(recruiterId: string) {
-    const candidates = await this.prisma.candidate.findMany({
-      where: {
-        assignedRecruiterId: recruiterId,
-        isDeleted: false,
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+  async getKpiOverview(recruiterId: string, periodInput?: string, dateInput?: string) {
+    const period = this.parsePeriod(periodInput);
+    const anchorDate = this.parseAnchorDate(dateInput);
+    const currentRange = this.getRange(period, anchorDate);
+    const prevRange = this.previousRange(currentRange.from, currentRange.to);
 
-    const byStatus = {
-      new: 0,
-      contacted: 0,
-      interview: 0,
-      offer: 0,
-      hired: 0,
-      rejected: 0,
-    } as Record<string, number>;
+    const [currentSummary, prevSummary, createdCandidates] = await Promise.all([
+      this.computeSummaryForRange(recruiterId, currentRange.from, currentRange.to),
+      this.computeSummaryForRange(recruiterId, prevRange.from, prevRange.to),
+      this.prisma.candidate.findMany({
+        where: {
+          assignedRecruiterId: recruiterId,
+          isDeleted: false,
+          createdAt: { gte: currentRange.from, lt: currentRange.to },
+        },
+        select: {
+          source: true,
+          position: true,
+        },
+      }),
+    ]);
 
     const bySource = new Map<string, number>();
     const byPosition = new Map<string, number>();
-    const todayIso = new Date().toISOString().slice(0, 10);
-    let todayCount = 0;
-
-    for (const c of candidates) {
-      byStatus[c.status] = (byStatus[c.status] || 0) + 1;
-      if ((c.createdAt?.toISOString?.() || '').slice(0, 10) === todayIso) {
-        todayCount += 1;
-      }
+    for (const c of createdCandidates) {
       const sourceKey = (c.source || 'Інше').trim();
       bySource.set(sourceKey, (bySource.get(sourceKey) || 0) + 1);
-
       const positionKey = (c.position || 'Без позиції').trim();
       byPosition.set(positionKey, (byPosition.get(positionKey) || 0) + 1);
     }
-
-    const total = candidates.length;
-    const hired = byStatus.hired || 0;
-    const rejected = byStatus.rejected || 0;
-    const interview = byStatus.interview || 0;
-    const conversion = total ? Math.round((hired / total) * 100) : 0;
-    const rejectionRate = total ? Math.round((rejected / total) * 100) : 0;
 
     const mapToSorted = (m: Map<string, number>, limit: number) =>
       Array.from(m.entries())
@@ -203,21 +299,33 @@ export class CandidatesService {
 
     return {
       summary: {
-        total,
-        hired,
-        conversion,
-        interview,
-        rejected,
-        rejectionRate,
-        today: todayCount,
+        total: currentSummary.total,
+        hired: currentSummary.hired,
+        conversion: currentSummary.conversion,
+        interview: currentSummary.interview,
+        rejected: currentSummary.rejected,
+        rejectionRate: currentSummary.rejectionRate,
+        totalChangePct: this.percentChange(currentSummary.total, prevSummary.total),
+        hiredChangePct: this.percentChange(currentSummary.hired, prevSummary.hired),
+        conversionChangePct: this.percentChange(currentSummary.conversion, prevSummary.conversion),
+        interviewChangePct: this.percentChange(currentSummary.interview, prevSummary.interview),
+        rejectedChangePct: this.percentChange(currentSummary.rejected, prevSummary.rejected),
+        rejectionRateChangePct: this.percentChange(currentSummary.rejectionRate, prevSummary.rejectionRate),
+      },
+      period: {
+        key: period,
+        from: currentRange.from.toISOString(),
+        to: currentRange.to.toISOString(),
+        prevFrom: prevRange.from.toISOString(),
+        prevTo: prevRange.to.toISOString(),
       },
       funnel: STATUS_ORDER.map((status) => ({
         stage: STATUS_LABELS[status],
-        value: byStatus[status] || 0,
+        value: currentSummary.byStatus[status] || 0,
       })),
       byStatus: STATUS_ORDER.map((status) => ({
         label: STATUS_LABELS[status],
-        value: byStatus[status] || 0,
+        value: currentSummary.byStatus[status] || 0,
       })),
       bySource: mapToSorted(bySource, 10),
       topPositions: mapToSorted(byPosition, 8),
