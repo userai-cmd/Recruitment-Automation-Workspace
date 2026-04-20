@@ -45,7 +45,29 @@
       .statusSelect.status-offer{border-color:rgba(255,198,90,.45);color:#ffe0a6}
       .statusSelect.status-hired{border-color:rgba(95,228,128,.45);color:#bdf5c8}
       .statusSelect.status-rejected{border-color:rgba(255,120,140,.45);color:#ffcad4}
-      .rowAction{background:transparent;border:none;color:#b6ccea;cursor:pointer;font-size:14px}
+      .rowAction{
+        display:inline-flex;align-items:center;justify-content:center;
+        width:30px;height:30px;margin-right:4px;border-radius:8px;
+        border:1px solid rgba(103,181,255,0.22);background:rgba(5,15,40,0.5);
+        color:#d2e8ff;cursor:pointer;font-size:15px;line-height:1;
+        pointer-events:auto;opacity:1;user-select:none;
+        transition:transform .12s ease,border-color .2s ease,background .2s ease,color .2s ease;
+      }
+      .rowAction:last-child{margin-right:0}
+      .rowAction:hover{
+        transform:translateY(-1px);
+        border-color:rgba(123,207,255,0.6);
+        background:rgba(12,40,90,0.72);
+        color:#fff;
+      }
+      .rowAction:focus-visible{
+        outline:none;
+        box-shadow:0 0 0 2px rgba(106,201,255,0.5);
+      }
+      .rowAction[disabled]{
+        opacity:.45;
+        cursor:not-allowed;
+      }
       .emptyRow{text-align:center;color:var(--muted);padding:20px}
       .pagination{display:flex;align-items:center;justify-content:flex-end;gap:10px;margin-top:14px}
       .pageInfo{font-size:12px;color:var(--muted);min-width:140px;text-align:center}

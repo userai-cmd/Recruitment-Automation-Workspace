@@ -154,6 +154,11 @@ function formatDate(iso) {
   return d.toLocaleDateString('uk-UA');
 }
 
+function showActionError(error, fallback = 'Операцію не виконано') {
+  const message = String(error?.message || fallback);
+  alert(message);
+}
+
 function toLocalDatetimeInputValue(date) {
   const d = new Date(date);
   const pad = (n) => String(n).padStart(2, '0');
@@ -283,6 +288,8 @@ function renderCandidatesTable(candidates) {
     editBtn.type = 'button';
     editBtn.title = 'Редагувати';
     editBtn.textContent = '✎';
+    editBtn.disabled = false;
+    editBtn.setAttribute('aria-disabled', 'false');
     editBtn.addEventListener('click', async () => {
       const fullName = prompt('ПІБ', cand.fullName || '');
       if (fullName === null) return;
@@ -315,6 +322,7 @@ function renderCandidatesTable(candidates) {
         await loadCandidatesTable();
       } catch (e) {
         console.error(e);
+        showActionError(e, 'Не вдалося зберегти зміни кандидата');
       }
     });
 
@@ -323,11 +331,14 @@ function renderCandidatesTable(candidates) {
     taskBtn.type = 'button';
     taskBtn.title = 'Додати задачу';
     taskBtn.textContent = '⏰';
+    taskBtn.disabled = false;
+    taskBtn.setAttribute('aria-disabled', 'false');
     taskBtn.addEventListener('click', async () => {
       try {
         await quickCreateTask(cand);
       } catch (e) {
         console.error(e);
+        showActionError(e, 'Не вдалося створити задачу');
       }
     });
 
@@ -336,6 +347,8 @@ function renderCandidatesTable(candidates) {
     archiveBtn.type = 'button';
     archiveBtn.title = 'Архівувати';
     archiveBtn.textContent = '🗑';
+    archiveBtn.disabled = false;
+    archiveBtn.setAttribute('aria-disabled', 'false');
     archiveBtn.addEventListener('click', async () => {
       const yes = window.confirm(`Архівувати кандидата "${cand.fullName}"?`);
       if (!yes) return;
@@ -344,6 +357,7 @@ function renderCandidatesTable(candidates) {
         await loadCandidatesTable();
       } catch (e) {
         console.error(e);
+        showActionError(e, 'Не вдалося архівувати кандидата');
       }
     });
 
