@@ -20,8 +20,11 @@
 
       .kpiFilters{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 14px}
       .periodBtns{display:flex;gap:8px;flex-wrap:wrap}
+      .kpiRight{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
       .periodBtn{border:1px solid rgba(103,181,255,.22);border-radius:999px;background:rgba(5,14,26,.6);color:#d9eeff;padding:8px 12px;font-size:12px;font-weight:800;cursor:pointer}
       .periodBtn.active{background:linear-gradient(180deg,rgba(40,167,255,.98),rgba(20,102,214,.96));border-color:rgba(126,213,255,.45)}
+      .dateInput{border:1px solid rgba(103,181,255,.22);border-radius:10px;background:rgba(5,14,26,.6);color:#d9eeff;padding:8px 10px;font-size:12px;font-weight:700}
+      .miniBtn{border:1px solid rgba(103,181,255,.22);border-radius:10px;background:rgba(5,14,26,.6);color:#d9eeff;padding:8px 10px;font-size:12px;font-weight:800;cursor:pointer}
       .periodInfo{font-size:12px;color:var(--muted)}
 
       .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
@@ -102,7 +105,13 @@
 
         <div class="kpiFilters">
           <div class="periodBtns" id="periodBtns"></div>
-          <div class="periodInfo" id="periodInfo"></div>
+          <div class="kpiRight">
+            <button id="prevPeriodBtn" class="miniBtn" type="button">← Попередній</button>
+            <input id="anchorDate" class="dateInput" type="date" />
+            <button id="nextPeriodBtn" class="miniBtn" type="button">Наступний →</button>
+            <button id="todayBtn" class="miniBtn" type="button">Сьогодні</button>
+            <div class="periodInfo" id="periodInfo"></div>
+          </div>
         </div>
         <div class="summaryRow" id="summaryRow"></div>
 
@@ -190,6 +199,7 @@
         year: 'Рік',
       };
       let selectedPeriod = localStorage.getItem('kpiPeriod') || 'month';
+      let selectedAnchorDate = localStorage.getItem('kpiAnchorDate') || new Date().toISOString().slice(0, 10);
 
       function fmtDate(iso) {
         return new Date(iso).toLocaleDateString('uk-UA');
@@ -217,6 +227,56 @@
             loadKpi();
           });
         });
+      }
+
+      function bindAnchorDateControls() {
+        const dateInput = document.getElementById('anchorDate');
+        const todayBtn = document.getElementById('todayBtn');
+        const prevBtn = document.getElementById('prevPeriodBtn');
+        const nextBtn = document.getElementById('nextPeriodBtn');
+        const stepByPeriod = (dateStr, periodKey, direction) => {
+          const date = new Date(`${dateStr}T00:00:00`);
+          if (Number.isNaN(date.getTime())) return new Date().toISOString().slice(0, 10);
+          if (periodKey === 'day') date.setDate(date.getDate() + direction * 1);
+          if (periodKey === 'week') date.setDate(date.getDate() + direction * 7);
+          if (periodKey === 'month') date.setMonth(date.getMonth() + direction * 1);
+          if (periodKey === 'quarter') date.setMonth(date.getMonth() + direction * 3);
+          if (periodKey === 'year') date.setFullYear(date.getFullYear() + direction * 1);
+          return date.toISOString().slice(0, 10);
+        };
+
+        if (dateInput) {
+          dateInput.value = selectedAnchorDate;
+          dateInput.addEventListener('change', () => {
+            selectedAnchorDate = dateInput.value || new Date().toISOString().slice(0, 10);
+            localStorage.setItem('kpiAnchorDate', selectedAnchorDate);
+            loadKpi();
+          });
+        }
+        if (todayBtn) {
+          todayBtn.addEventListener('click', () => {
+            selectedAnchorDate = new Date().toISOString().slice(0, 10);
+            localStorage.setItem('kpiAnchorDate', selectedAnchorDate);
+            if (dateInput) dateInput.value = selectedAnchorDate;
+            loadKpi();
+          });
+        }
+        if (prevBtn) {
+          prevBtn.addEventListener('click', () => {
+            selectedAnchorDate = stepByPeriod(selectedAnchorDate, selectedPeriod, -1);
+            localStorage.setItem('kpiAnchorDate', selectedAnchorDate);
+            if (dateInput) dateInput.value = selectedAnchorDate;
+            loadKpi();
+          });
+        }
+        if (nextBtn) {
+          nextBtn.addEventListener('click', () => {
+            selectedAnchorDate = stepByPeriod(selectedAnchorDate, selectedPeriod, 1);
+            localStorage.setItem('kpiAnchorDate', selectedAnchorDate);
+            if (dateInput) dateInput.value = selectedAnchorDate;
+            loadKpi();
+          });
+        }
       }
 
       function renderFunnel(data) {
@@ -270,7 +330,11 @@
           const me = await meRes.json();
           document.getElementById('subline').textContent = `Ви: ${me.email} (${me.role})`;
 
-          const res = await fetch(`/candidates/kpi/overview?period=${encodeURIComponent(selectedPeriod)}`, { headers });
+          const query = new URLSearchParams({
+            period: selectedPeriod,
+            date: selectedAnchorDate,
+          });
+          const res = await fetch(`/candidates/kpi/overview?${query.toString()}`, { headers });
           if (!res.ok) throw new Error('kpi request failed');
           const data = await res.json();
 
@@ -293,6 +357,7 @@
       window.UI?.setActiveNav('/kpi');
       window.UI?.initThemeToggle();
       renderPeriodButtons();
+      bindAnchorDateControls();
       loadKpi();
     </script>
   </body>
