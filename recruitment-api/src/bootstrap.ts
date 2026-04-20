@@ -1,3 +1,4 @@
+import { existsSync } from 'fs';
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { join } from 'path';
@@ -8,7 +9,13 @@ import { AppModule } from './app.module';
 export async function createApp(): Promise<NestExpressApplication> {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
-  const publicDir = join(process.cwd(), 'public');
+  const publicCandidates = [
+    join(process.cwd(), 'public'),
+    join(process.cwd(), 'recruitment-api', 'public'),
+    join(__dirname, '..', 'public'),
+    join(__dirname, '..', '..', 'public'),
+  ];
+  const publicDir = publicCandidates.find((candidate) => existsSync(candidate)) || publicCandidates[0];
   const expressApp = app.getHttpAdapter().getInstance();
   const sendHtml = (res: Response, fileName: string) => {
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
