@@ -1,8 +1,13 @@
+import { NestFactory } from '@nestjs/core';
 import { createApp } from '../src/bootstrap';
 
 type Handler = (req: any, res: any) => void;
 
 let cachedHandler: Handler | null = null;
+
+// Keep an explicit Nest import in the serverless entrypoint so Vercel's
+// Nest detector recognizes this file as the runtime entry.
+void NestFactory;
 
 async function getHandler(): Promise<Handler> {
   if (cachedHandler) return cachedHandler;
