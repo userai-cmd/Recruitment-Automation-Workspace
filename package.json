@@ -1,0 +1,8 @@
+{
+  "name": "recruitment-automation-workspace",
+  "private": true,
+  "scripts": {
+    "build": "cd recruitment-api && npm install && npm run build",
+    "start": "cd recruitment-api && npm run start:prod"
+  }
+}
