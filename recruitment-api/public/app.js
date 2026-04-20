@@ -40,6 +40,20 @@ function requireAuth() {
   return token;
 }
 
+function getUserIdFromToken() {
+  const token = getToken();
+  if (!token) return null;
+  try {
+    const payloadPart = token.split('.')[1];
+    if (!payloadPart) return null;
+    const json = atob(payloadPart.replace(/-/g, '+').replace(/_/g, '/'));
+    const payload = JSON.parse(json);
+    return payload?.sub || null;
+  } catch {
+    return null;
+  }
+}
+
 async function api(path, options = {}) {
   const token = requireAuth();
   const headers = {
@@ -49,6 +63,15 @@ async function api(path, options = {}) {
   };
 
   const res = await fetch(`${API_BASE}${path}`, { ...options, headers });
+  if (res.status === 401) {
+    // Token is stale/invalid: reset session and send user to login.
+    localStorage.removeItem('accessToken');
+    if (!document.getElementById('loginForm')) {
+      const reason = encodeURIComponent('Сесія завершилась. Увійдіть знову.');
+      window.location.href = `/?reason=${reason}`;
+    }
+    throw new Error('401 Unauthorized: session expired');
+  }
   if (!res.ok) {
     const text = await res.text();
     throw new Error(`${res.status} ${res.statusText}: ${text || 'request failed'}`);
@@ -59,6 +82,12 @@ async function api(path, options = {}) {
 async function login() {
   const form = document.getElementById('loginForm');
   const err = document.getElementById('err');
+  const params = new URLSearchParams(window.location.search);
+  const reason = params.get('reason');
+  if (reason && err) {
+    err.style.display = 'block';
+    err.textContent = reason;
+  }
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -157,6 +186,84 @@ function formatDate(iso) {
 function showActionError(error, fallback = 'Операцію не виконано') {
   const message = String(error?.message || fallback);
   alert(message);
+}
+
+function openFormModal(title, fields, submitLabel = 'Зберегти') {
+  return new Promise((resolve) => {
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(3,10,22,.75);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;';
+    const card = document.createElement('div');
+    card.style.cssText = 'width:min(640px,96vw);max-height:90vh;overflow:auto;background:#0a1830;border:1px solid rgba(126,213,255,.35);border-radius:14px;padding:16px;color:#e8f4ff;';
+    card.innerHTML = `<h3 style="margin:0 0 12px;font-size:20px">${title}</h3>`;
+
+    const form = document.createElement('form');
+    form.style.cssText = 'display:grid;gap:10px;';
+
+    const inputs = {};
+    for (const f of fields) {
+      const wrap = document.createElement('label');
+      wrap.style.cssText = 'display:grid;gap:6px;font-size:13px;';
+      wrap.textContent = f.label;
+      const input = document.createElement(f.multiline ? 'textarea' : 'input');
+      input.value = f.value || '';
+      input.required = Boolean(f.required);
+      input.style.cssText =
+        'width:100%;padding:10px 12px;border-radius:10px;border:1px solid rgba(126,213,255,.3);background:#061326;color:#fff;font:inherit;';
+      if (f.type) input.type = f.type;
+      if (f.placeholder) input.placeholder = f.placeholder;
+      if (f.multiline) input.rows = 3;
+      inputs[f.name] = input;
+      wrap.appendChild(input);
+      form.appendChild(wrap);
+    }
+
+    const actions = document.createElement('div');
+    actions.style.cssText = 'display:flex;justify-content:flex-end;gap:8px;margin-top:4px;';
+    const cancelBtn = document.createElement('button');
+    cancelBtn.type = 'button';
+    cancelBtn.textContent = 'Скасувати';
+    cancelBtn.style.cssText = 'padding:10px 14px;border-radius:10px;border:1px solid rgba(126,213,255,.3);background:#09172b;color:#fff;cursor:pointer;';
+    const submitBtn = document.createElement('button');
+    submitBtn.type = 'submit';
+    submitBtn.textContent = submitLabel;
+    submitBtn.style.cssText = 'padding:10px 14px;border-radius:10px;border:none;background:#2a8fff;color:#fff;font-weight:700;cursor:pointer;';
+    actions.appendChild(cancelBtn);
+    actions.appendChild(submitBtn);
+    form.appendChild(actions);
+    card.appendChild(form);
+    overlay.appendChild(card);
+    document.body.appendChild(overlay);
+
+    const close = (result) => {
+      document.body.removeChild(overlay);
+      resolve(result);
+    };
+    cancelBtn.addEventListener('click', () => close(null));
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) close(null);
+    });
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const values = {};
+      for (const f of fields) values[f.name] = inputs[f.name].value;
+      close(values);
+    });
+    const first = inputs[fields[0]?.name];
+    if (first) first.focus();
+  });
+}
+
+function extractApiError(error, fallback) {
+  const message = String(error?.message || fallback || '');
+  const match = message.match(/:\s*(\{.*\})$/);
+  if (!match) return message || fallback;
+  try {
+    const parsed = JSON.parse(match[1]);
+    if (typeof parsed?.message === 'string') return parsed.message;
+    return message || fallback;
+  } catch {
+    return message || fallback;
+  }
 }
 
 function toLocalDatetimeInputValue(date) {
@@ -291,32 +398,32 @@ function renderCandidatesTable(candidates) {
     editBtn.disabled = false;
     editBtn.setAttribute('aria-disabled', 'false');
     editBtn.addEventListener('click', async () => {
-      const fullName = prompt('ПІБ', cand.fullName || '');
-      if (fullName === null) return;
-      const phone = prompt('Телефон', cand.phone || '');
-      if (phone === null) return;
-      const email = prompt('Email', cand.email || '');
-      if (email === null) return;
-      const city = prompt('Місто', cand.city || '');
-      if (city === null) return;
-      const position = prompt('Позиція', cand.position || '');
-      if (position === null) return;
-      const source = prompt('Джерело', cand.source || '');
-      if (source === null) return;
-      const comment = prompt('Коментар', cand.comment || '');
-      if (comment === null) return;
+      const values = await openFormModal(
+        'Редагування кандидата',
+        [
+          { name: 'fullName', label: 'ПІБ', value: cand.fullName || '', required: true },
+          { name: 'phone', label: 'Телефон', value: cand.phone || '', required: true },
+          { name: 'email', label: 'Email', value: cand.email || '', type: 'email' },
+          { name: 'city', label: 'Місто', value: cand.city || '' },
+          { name: 'position', label: 'Позиція', value: cand.position || '' },
+          { name: 'source', label: 'Джерело', value: cand.source || '' },
+          { name: 'comment', label: 'Коментар', value: cand.comment || '', multiline: true },
+        ],
+        'Зберегти',
+      );
+      if (!values) return;
 
       try {
         await api(`/candidates/${cand.id}`, {
           method: 'PATCH',
           body: JSON.stringify({
-            fullName: fullName || undefined,
-            phone: phone || undefined,
-            email: email || undefined,
-            city: city || undefined,
-            position: position || undefined,
-            source: source || undefined,
-            comment: comment || undefined,
+            fullName: values.fullName || undefined,
+            phone: values.phone || undefined,
+            email: values.email || undefined,
+            city: values.city || undefined,
+            position: values.position || undefined,
+            source: values.source || undefined,
+            comment: values.comment || undefined,
           }),
         });
         await loadCandidatesTable();
@@ -335,7 +442,29 @@ function renderCandidatesTable(candidates) {
     taskBtn.setAttribute('aria-disabled', 'false');
     taskBtn.addEventListener('click', async () => {
       try {
-        await quickCreateTask(cand);
+        const base = new Date();
+        base.setDate(base.getDate() + 1);
+        base.setHours(10, 0, 0, 0);
+        const values = await openFormModal(
+          'Нова задача',
+          [
+            { name: 'title', label: 'Назва задачі', value: `Зв'язатися з кандидатом: ${cand.fullName}`, required: true },
+            { name: 'dueAt', label: 'Дедлайн (YYYY-MM-DDTHH:mm)', value: toLocalDatetimeInputValue(base), required: true },
+            { name: 'priority', label: 'Пріоритет (low / medium / high)', value: 'medium', required: true },
+          ],
+          'Створити задачу',
+        );
+        if (!values) return;
+        await api('/tasks', {
+          method: 'POST',
+          body: JSON.stringify({
+            title: values.title || 'Нова задача',
+            dueAt: new Date(values.dueAt).toISOString(),
+            candidateId: cand.id,
+            priority: ['low', 'medium', 'high'].includes(values.priority) ? values.priority : 'medium',
+          }),
+        });
+        alert('Задачу створено');
       } catch (e) {
         console.error(e);
         showActionError(e, 'Не вдалося створити задачу');
@@ -530,7 +659,11 @@ function bindCandidatePage() {
     if (err) err.style.display = 'none';
 
     try {
-      const me = await api('/auth/me');
+      let assignedRecruiterId = getUserIdFromToken();
+      if (!assignedRecruiterId) {
+        const me = await api('/auth/me');
+        assignedRecruiterId = me.id;
+      }
       const payload = {
         fullName: document.getElementById('pFullName').value,
         phone: document.getElementById('pPhone').value,
@@ -539,14 +672,17 @@ function bindCandidatePage() {
         city: document.getElementById('pCity').value || undefined,
         source: document.getElementById('pSource').value || undefined,
         comment: document.getElementById('pComment').value || undefined,
-        assignedRecruiterId: me.id,
+        assignedRecruiterId,
       };
       await api('/candidates', { method: 'POST', body: JSON.stringify(payload) });
       if (ok) ok.style.display = 'block';
       form.reset();
       setTimeout(() => { window.location.href = '/dashboard'; }, 650);
     } catch (e2) {
-      if (err) err.style.display = 'block';
+      if (err) {
+        err.style.display = 'block';
+        err.textContent = `Помилка створення: ${extractApiError(e2, "перевірте дані та спробуйте ще раз")}`;
+      }
       console.error(e2);
     }
   });
