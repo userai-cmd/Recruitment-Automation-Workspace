@@ -25,6 +25,8 @@ function initClock() {
   const clockEl = document.getElementById('clock');
   const dateEl = document.getElementById('clock-date');
   if (!clockEl || !dateEl) return;
+  if (window.__uiClockStarted) return;
+  window.__uiClockStarted = true;
 
   const days = ['Неділя','Понеділок','Вівторок','Середа','Четвер',"П'ятниця",'Субота'];
   const months = ['січня','лютого','березня','квітня','травня','червня','липня','серпня','вересня','жовтня','листопада','грудня'];
@@ -93,4 +95,10 @@ async function hideUsersNavForRecruiter() {
 }
 
 window.UI = { initStarsAndParticles, initClock, setActiveNav, initThemeToggle, hideUsersNavForRecruiter };
+
+document.addEventListener('DOMContentLoaded', () => {
+  initThemeToggle();
+  initClock();
+  hideUsersNavForRecruiter();
+});
 

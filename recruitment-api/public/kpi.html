@@ -107,7 +107,13 @@
         </section>
 
         <div class="kpiFilters">
-          <div class="periodBtns" id="periodBtns"></div>
+          <div class="periodBtns" id="periodBtns">
+            <button type="button" class="periodBtn" data-period="day">День</button>
+            <button type="button" class="periodBtn" data-period="week">Тиждень</button>
+            <button type="button" class="periodBtn" data-period="month">Місяць</button>
+            <button type="button" class="periodBtn" data-period="quarter">Квартал</button>
+            <button type="button" class="periodBtn" data-period="year">Рік</button>
+          </div>
           <div class="kpiRight">
             <select id="recruiterFilter" class="recruiterSelect" style="display:none"></select>
             <button id="prevPeriodBtn" class="miniBtn" type="button">← Попередній</button>
@@ -153,6 +159,44 @@
     <script src="/ui.js"></script>
     <script src="/app.js"></script>
     <script>
+      (function initKpiThemeAndClock() {
+        const readTheme = () => (localStorage.getItem('uiTheme') === 'soft' ? 'soft' : 'dark');
+        const applyTheme = (theme) => {
+          const next = theme === 'soft' ? 'soft' : 'dark';
+          document.documentElement.setAttribute('data-theme', next);
+          localStorage.setItem('uiTheme', next);
+          const toggle = document.querySelector('[data-theme-toggle]');
+          if (toggle) toggle.textContent = next === 'soft' ? 'Dark' : 'Soft';
+        };
+        applyTheme(readTheme());
+        const toggle = document.querySelector('[data-theme-toggle]');
+        if (toggle && !toggle.dataset.boundKpiThemeToggle) {
+          toggle.dataset.boundKpiThemeToggle = '1';
+          toggle.addEventListener('click', () => {
+            const current = document.documentElement.getAttribute('data-theme') || 'dark';
+            applyTheme(current === 'soft' ? 'dark' : 'soft');
+          });
+        }
+        const clockEl = document.getElementById('clock');
+        const dateEl = document.getElementById('clock-date');
+        if (clockEl && dateEl) {
+          const days = ['Неділя', 'Понеділок', 'Вівторок', 'Середа', 'Четвер', "П'ятниця", 'Субота'];
+          const months = ['січня', 'лютого', 'березня', 'квітня', 'травня', 'червня', 'липня', 'серпня', 'вересня', 'жовтня', 'листопада', 'грудня'];
+          const pad = (n) => String(n).padStart(2, '0');
+          const updateClock = () => {
+            const now = new Date();
+            clockEl.textContent = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+            dateEl.textContent = `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]}`;
+          };
+          updateClock();
+          if (!window.__kpiClockTimer) window.__kpiClockTimer = setInterval(updateClock, 1000);
+        }
+      })();
+
+      window.UI?.initStarsAndParticles();
+      window.UI?.setActiveNav('/kpi');
+      window.UI?.hideUsersNavForRecruiter?.();
+
       const statusColors = ['#7cc3ff', '#7de5c1', '#b39aff', '#9ee44f', '#f5b25c', '#f28aa0'];
 
       function authHeaders() {
@@ -377,11 +421,6 @@
         }
       }
 
-      window.UI?.initStarsAndParticles();
-      window.UI?.initClock();
-      window.UI?.setActiveNav('/kpi');
-      window.UI?.initThemeToggle();
-      window.UI?.hideUsersNavForRecruiter?.();
       renderPeriodButtons();
       bindAnchorDateControls();
       const recruiterFilter = document.getElementById('recruiterFilter');

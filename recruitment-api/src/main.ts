@@ -10,6 +10,12 @@ async function bootstrap(): Promise<void> {
 
   const publicDir = join(process.cwd(), 'public');
   const expressApp = app.getHttpAdapter().getInstance();
+  const sendHtml = (res: Response, fileName: string) => {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.sendFile(join(publicDir, fileName));
+  };
 
   // Serve UI assets reliably in Docker/production.
   // We keep the generic static middleware, but also add explicit routes for key files.
@@ -18,27 +24,13 @@ async function bootstrap(): Promise<void> {
   expressApp.get('/big_dnipro_logo_final.png', (_req: Request, res: Response) =>
     res.sendFile(join(publicDir, 'big_dnipro_logo_final.png')),
   );
-  expressApp.get('/', (_req: Request, res: Response) =>
-    res.sendFile(join(publicDir, 'index.html')),
-  );
-  expressApp.get('/home', (_req: Request, res: Response) =>
-    res.sendFile(join(publicDir, 'home.html')),
-  );
-  expressApp.get('/dashboard', (_req: Request, res: Response) =>
-    res.sendFile(join(publicDir, 'dashboard.html')),
-  );
-  expressApp.get('/kpi', (_req: Request, res: Response) =>
-    res.sendFile(join(publicDir, 'kpi.html')),
-  );
-  expressApp.get('/motivation', (_req: Request, res: Response) =>
-    res.sendFile(join(publicDir, 'motivation.html')),
-  );
-  expressApp.get('/users', (_req: Request, res: Response) =>
-    res.sendFile(join(publicDir, 'users.html')),
-  );
-  expressApp.get('/candidate', (_req: Request, res: Response) =>
-    res.sendFile(join(publicDir, 'candidate.html')),
-  );
+  expressApp.get('/', (_req: Request, res: Response) => sendHtml(res, 'index.html'));
+  expressApp.get('/home', (_req: Request, res: Response) => sendHtml(res, 'home.html'));
+  expressApp.get('/dashboard', (_req: Request, res: Response) => sendHtml(res, 'dashboard.html'));
+  expressApp.get('/kpi', (_req: Request, res: Response) => sendHtml(res, 'kpi.html'));
+  expressApp.get('/motivation', (_req: Request, res: Response) => sendHtml(res, 'motivation.html'));
+  expressApp.get('/users', (_req: Request, res: Response) => sendHtml(res, 'users.html'));
+  expressApp.get('/candidate', (_req: Request, res: Response) => sendHtml(res, 'candidate.html'));
 
   app.useGlobalPipes(
     new ValidationPipe({

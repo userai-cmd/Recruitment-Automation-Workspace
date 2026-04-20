@@ -45,7 +45,7 @@ body::after{background:
 .shell{max-width:var(--max-width);margin:0 auto;position:relative}
 
 /* NAV */
-.top-nav{position:relative;display:flex;align-items:center;justify-content:space-between;gap:18px;padding:10px 14px;border:1px solid rgba(106,184,255,0.14);
+.top-nav{position:relative;display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:14px;padding:10px 14px;border:1px solid rgba(106,184,255,0.14);
   border-radius:18px;background:linear-gradient(180deg,rgba(7,16,31,0.82),rgba(4,12,24,0.72));
   box-shadow:inset 0 1px 0 rgba(255,255,255,0.03),0 18px 40px rgba(0,0,0,0.28);overflow:hidden;margin-bottom:22px}
 .top-nav::before{content:"";position:absolute;left:0;right:0;top:0;height:1px;background:linear-gradient(90deg,transparent,rgba(134,219,255,0.75),transparent);opacity:.7}
@@ -55,13 +55,14 @@ body::after{background:
 .brand-text{display:flex;flex-direction:column;line-height:1.05}
 .brand-title{display:none}
 .brand-subtitle{font-size:14px;font-weight:800;color:#8db6dd;text-transform:uppercase;letter-spacing:1.4px;margin-top:0}
-.nav-links{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.nav-links{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;min-width:0}
 .nav-links a{text-decoration:none;color:#d9eeff;font-size:13px;font-weight:700;padding:11px 16px;border-radius:12px;border:1px solid rgba(103,181,255,0.14);background:rgba(5,14,26,0.54);transition:.25s ease}
 .nav-links a:hover,.nav-links a.active{border-color:rgba(123,207,255,0.44);background:linear-gradient(180deg,rgba(16,54,100,0.74),rgba(8,24,48,0.82));
   box-shadow:0 0 18px rgba(40,167,255,0.16);color:#fff}
 .theme-toggle{padding:9px 12px;border-radius:11px;border:1px solid rgba(103,181,255,0.2);background:rgba(5,14,26,0.62);color:#d9eeff;
   font-size:11px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;cursor:pointer;transition:.2s ease}
 .theme-toggle:hover{border-color:rgba(123,207,255,0.44);box-shadow:0 0 14px rgba(40,167,255,0.14)}
+.top-nav > div:last-child{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap;min-width:0}
 .nav-clock{display:flex;flex-direction:column;align-items:flex-end;padding:6px 14px;border-radius:10px;background:rgba(0,12,35,0.7);
   border:1px solid rgba(0,150,255,0.2);flex-shrink:0}
 .nav-clock-time{font-size:16px;font-weight:700;color:#90ccff;letter-spacing:1.5px;font-variant-numeric:tabular-nums}
@@ -131,7 +132,11 @@ body::after{background:
 :root[data-theme='soft'] .hero,
 :root[data-theme='soft'] .cardPanel,
 :root[data-theme='soft'] .kpi,
+:root[data-theme='soft'] .summaryCard,
 :root[data-theme='soft'] .tableWrap,
+:root[data-theme='soft'] .quick-stat,
+:root[data-theme='soft'] .tasksPanel,
+:root[data-theme='soft'] .taskCol,
 :root[data-theme='soft'] .home-card,
 :root[data-theme='soft'] .panel{
   background:linear-gradient(180deg,rgba(255,255,255,0.98),rgba(246,251,255,0.98)) !important;
@@ -170,6 +175,7 @@ body::after{background:
 :root[data-theme='soft'] .formSub,
 :root[data-theme='soft'] .footerText,
 :root[data-theme='soft'] .kpi .lbl,
+:root[data-theme='soft'] .summaryCard .l,
 :root[data-theme='soft'] .quick-stat-sub,
 :root[data-theme='soft'] .hero-stat-lbl{
   color:#5b6f8f !important;
@@ -177,6 +183,9 @@ body::after{background:
 :root[data-theme='soft'] .label,
 :root[data-theme='soft'] .field label,
 :root[data-theme='soft'] .candTable thead th,
+:root[data-theme='soft'] .tasksTitle,
+:root[data-theme='soft'] .taskCol h4,
+:root[data-theme='soft'] .taskMeta,
 :root[data-theme='soft'] .barLbl,
 :root[data-theme='soft'] .legendItem,
 :root[data-theme='soft'] .sub,
@@ -199,19 +208,34 @@ body::after{background:
 :root[data-theme='soft'] .actionBtn,
 :root[data-theme='soft'] .pageBtn,
 :root[data-theme='soft'] .statusSelect{
-  background:rgba(243,249,255,0.95) !important;
-  color:#13335a !important;
+  background:linear-gradient(180deg,rgba(248,252,255,0.98),rgba(238,246,255,0.98)) !important;
+  color:#1b416d !important;
   border-color:rgba(127,170,224,0.34) !important;
-  box-shadow:none !important;
+  box-shadow:0 2px 8px rgba(90,130,180,0.1) !important;
 }
 :root[data-theme='soft'] .nav-links a:hover,
 :root[data-theme='soft'] .nav-links a.active{
-  background:linear-gradient(180deg,rgba(235,245,255,0.98),rgba(224,238,255,0.98)) !important;
-  color:#0f315b !important;
+  background:linear-gradient(180deg,rgba(213,232,255,0.98),rgba(198,220,248,0.98)) !important;
+  color:#123b6d !important;
+}
+:root[data-theme='soft'] .periodBtn,
+:root[data-theme='soft'] .miniBtn,
+:root[data-theme='soft'] .dateInput,
+:root[data-theme='soft'] .recruiterSelect{
+  background:linear-gradient(180deg,rgba(248,252,255,0.98),rgba(237,246,255,0.98)) !important;
+  color:#1d446f !important;
+  border-color:rgba(129,171,224,0.38) !important;
+  box-shadow:0 2px 8px rgba(90,130,180,0.1) !important;
+}
+:root[data-theme='soft'] .periodBtn.active{
+  background:linear-gradient(180deg,rgba(217,235,255,0.98),rgba(202,224,250,0.98)) !important;
+  color:#1c4878 !important;
+  border-color:rgba(111,160,220,0.5) !important;
 }
 :root[data-theme='soft'] .search,
 :root[data-theme='soft'] .search-box,
 :root[data-theme='soft'] .home-search,
+:root[data-theme='soft'] .field input,
 :root[data-theme='soft'] .filterSelect,
 :root[data-theme='soft'] .sortSelect,
 :root[data-theme='soft'] .button,
@@ -226,9 +250,27 @@ body::after{background:
 }
 :root[data-theme='soft'] .button,
 :root[data-theme='soft'] .btn{
-  background:linear-gradient(180deg,rgba(68,145,231,0.96),rgba(43,108,196,0.94)) !important;
-  color:#fff !important;
-  box-shadow:0 10px 20px rgba(60,120,190,0.24) !important;
+  background:linear-gradient(180deg,rgba(248,252,255,0.98),rgba(236,246,255,0.98)) !important;
+  color:#1c456f !important;
+  border:1px solid rgba(129,171,224,0.42) !important;
+  box-shadow:0 2px 8px rgba(90,130,180,0.1) !important;
+}
+:root[data-theme='soft'] .button:hover,
+:root[data-theme='soft'] .btn:hover,
+:root[data-theme='soft'] .miniBtn:hover,
+:root[data-theme='soft'] .periodBtn:hover,
+:root[data-theme='soft'] .pageBtn:hover,
+:root[data-theme='soft'] .theme-toggle:hover{
+  background:linear-gradient(180deg,rgba(229,242,255,0.98),rgba(216,233,252,0.98)) !important;
+  color:#173e69 !important;
+  border-color:rgba(111,160,220,0.55) !important;
+}
+:root[data-theme='soft'] .button:active,
+:root[data-theme='soft'] .btn:active,
+:root[data-theme='soft'] .miniBtn:active,
+:root[data-theme='soft'] .periodBtn:active,
+:root[data-theme='soft'] .pageBtn:active{
+  transform:translateY(1px);
 }
 :root[data-theme='soft'] .search input,
 :root[data-theme='soft'] .search-box input,
@@ -268,11 +310,30 @@ body::after{background:
 }
 :root[data-theme='soft'] .rowAction{
   color:#2f5f9e !important;
+  background:linear-gradient(180deg,rgba(248,252,255,0.98),rgba(236,246,255,0.98)) !important;
+  border-color:rgba(129,171,224,0.4) !important;
+  box-shadow:0 2px 8px rgba(90,130,180,0.1) !important;
+}
+:root[data-theme='soft'] .rowAction:hover{
+  background:linear-gradient(180deg,rgba(229,242,255,0.98),rgba(216,233,252,0.98)) !important;
+  border-color:rgba(111,160,220,0.55) !important;
+  color:#173e69 !important;
 }
 :root[data-theme='soft'] .hero::before,
 :root[data-theme='soft'] .hero::after,
 :root[data-theme='soft'] .core-wrap,
 :root[data-theme='soft'] .core-eye{
   opacity:.45 !important;
+}
+:root[data-theme='soft'] .formTag{
+  background:linear-gradient(180deg,rgba(248,252,255,0.98),rgba(236,246,255,0.98)) !important;
+  border-color:rgba(129,171,224,0.4) !important;
+  color:#1c456f !important;
+  box-shadow:0 2px 8px rgba(90,130,180,0.1) !important;
+}
+:root[data-theme='soft'] .iconBox{
+  background:radial-gradient(circle at 35% 30%,rgba(206,228,252,0.45),rgba(179,210,245,0.88) 42%,rgba(222,238,255,0.96) 100%) !important;
+  border-color:rgba(129,171,224,0.4) !important;
+  box-shadow:0 8px 18px rgba(90,130,180,0.18) !important;
 }
 
