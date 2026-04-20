@@ -30,6 +30,6 @@ export class UpdateCandidateDto {
   comment?: string;
 
   @IsOptional()
-  @IsIn(['new', 'contacted', 'interview', 'offer', 'hired', 'rejected'])
-  status?: 'new' | 'contacted' | 'interview' | 'offer' | 'hired' | 'rejected';
+  @IsIn(['new', 'contacted', 'interview', 'offer', 'hired', 'sb_failed', 'rejected'])
+  status?: 'new' | 'contacted' | 'interview' | 'offer' | 'hired' | 'sb_failed' | 'rejected';
 }

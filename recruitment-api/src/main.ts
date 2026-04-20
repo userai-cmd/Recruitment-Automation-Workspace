@@ -30,6 +30,9 @@ async function bootstrap(): Promise<void> {
   expressApp.get('/kpi', (_req: Request, res: Response) =>
     res.sendFile(join(publicDir, 'kpi.html')),
   );
+  expressApp.get('/motivation', (_req: Request, res: Response) =>
+    res.sendFile(join(publicDir, 'motivation.html')),
+  );
   expressApp.get('/candidate', (_req: Request, res: Response) =>
     res.sendFile(join(publicDir, 'candidate.html')),
   );

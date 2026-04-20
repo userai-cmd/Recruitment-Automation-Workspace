@@ -10,12 +10,16 @@ const STATUS_LABELS: Record<string, string> = {
   interview: 'Співбесіда',
   offer: 'Офер',
   hired: 'Оформлений',
+  sb_failed: 'Не пройшов СБ',
   rejected: 'Відхилений',
 };
 
-const STATUS_ORDER = ['new', 'contacted', 'interview', 'offer', 'hired', 'rejected'];
+const STATUS_ORDER = ['new', 'contacted', 'interview', 'offer', 'hired', 'sb_failed', 'rejected'];
 const KPI_PERIODS = ['day', 'week', 'month', 'quarter', 'year'] as const;
 type KpiPeriod = (typeof KPI_PERIODS)[number];
+const REFERRAL_SOURCES = new Set(['рекомендація', 'referral', 'recommendation']);
+const HIRED_BONUS_UAH = 800;
+const SB_FAILED_BONUS_UAH = 400;
 
 @Injectable()
 export class CandidatesService {
@@ -329,6 +333,125 @@ export class CandidatesService {
       })),
       bySource: mapToSorted(bySource, 10),
       topPositions: mapToSorted(byPosition, 8),
+    };
+  }
+
+  async getMotivationOverview(recruiterId: string, periodInput?: string, dateInput?: string) {
+    const period = this.parsePeriod(periodInput);
+    const anchorDate = this.parseAnchorDate(dateInput);
+    const currentRange = this.getRange(period, anchorDate);
+    const prevRange = this.previousRange(currentRange.from, currentRange.to);
+
+    const [currentHiredRows, currentSbRows, prevHiredRows, prevSbRows] = await Promise.all([
+      this.prisma.candidateStatusHistory.findMany({
+        where: {
+          changedByUserId: recruiterId,
+          toStatus: 'hired',
+          changedAt: { gte: currentRange.from, lt: currentRange.to },
+        },
+        select: {
+          candidateId: true,
+          changedAt: true,
+          candidate: {
+            select: { fullName: true, source: true },
+          },
+        },
+      }),
+      this.prisma.candidateStatusHistory.findMany({
+        where: {
+          changedByUserId: recruiterId,
+          toStatus: 'sb_failed',
+          changedAt: { gte: currentRange.from, lt: currentRange.to },
+        },
+        select: {
+          candidateId: true,
+          changedAt: true,
+          candidate: {
+            select: { fullName: true, source: true },
+          },
+        },
+      }),
+      this.prisma.candidateStatusHistory.findMany({
+        where: {
+          changedByUserId: recruiterId,
+          toStatus: 'hired',
+          changedAt: { gte: prevRange.from, lt: prevRange.to },
+        },
+        select: {
+          candidateId: true,
+          candidate: {
+            select: { source: true },
+          },
+        },
+      }),
+      this.prisma.candidateStatusHistory.findMany({
+        where: {
+          changedByUserId: recruiterId,
+          toStatus: 'sb_failed',
+          changedAt: { gte: prevRange.from, lt: prevRange.to },
+        },
+        select: { candidateId: true },
+      }),
+    ]);
+
+    const distinctByCandidate = <T extends { candidateId: string }>(rows: T[]) => {
+      const map = new Map<string, T>();
+      for (const row of rows) map.set(row.candidateId, row);
+      return Array.from(map.values());
+    };
+    const isReferral = (source?: string | null) => REFERRAL_SOURCES.has((source || '').trim().toLowerCase());
+
+    const currentHiredDistinct = distinctByCandidate(currentHiredRows).filter((r) => !isReferral(r.candidate?.source));
+    const currentSbDistinct = distinctByCandidate(currentSbRows);
+    const prevHiredDistinct = distinctByCandidate(prevHiredRows).filter((r) => !isReferral(r.candidate?.source));
+    const prevSbDistinct = distinctByCandidate(prevSbRows);
+
+    const hiredCount = currentHiredDistinct.length;
+    const sbFailedCount = currentSbDistinct.length;
+    const hiredBonus = hiredCount * HIRED_BONUS_UAH;
+    const sbFailedBonus = sbFailedCount * SB_FAILED_BONUS_UAH;
+    const totalBonus = hiredBonus + sbFailedBonus;
+
+    const prevTotalBonus = prevHiredDistinct.length * HIRED_BONUS_UAH + prevSbDistinct.length * SB_FAILED_BONUS_UAH;
+    const totalChangePct = this.percentChange(totalBonus, prevTotalBonus);
+
+    const details = [
+      ...currentHiredDistinct.map((row) => ({
+        candidateId: row.candidateId,
+        candidateName: row.candidate?.fullName || 'Кандидат',
+        reason: 'Оформлений співробітник',
+        amount: HIRED_BONUS_UAH,
+        changedAt: row.changedAt.toISOString(),
+      })),
+      ...currentSbDistinct.map((row) => ({
+        candidateId: row.candidateId,
+        candidateName: row.candidate?.fullName || 'Кандидат',
+        reason: 'Не пройшов перевірку СБ',
+        amount: SB_FAILED_BONUS_UAH,
+        changedAt: row.changedAt.toISOString(),
+      })),
+    ].sort((a, b) => b.changedAt.localeCompare(a.changedAt));
+
+    return {
+      period: {
+        key: period,
+        from: currentRange.from.toISOString(),
+        to: currentRange.to.toISOString(),
+      },
+      summary: {
+        hiredCount,
+        sbFailedCount,
+        hiredBonus,
+        sbFailedBonus,
+        totalBonus,
+        totalChangePct,
+      },
+      rules: {
+        hiredBonusPerCandidate: HIRED_BONUS_UAH,
+        sbFailedBonusPerCandidate: SB_FAILED_BONUS_UAH,
+        excludeReferralForHired: true,
+      },
+      details,
     };
   }
 }

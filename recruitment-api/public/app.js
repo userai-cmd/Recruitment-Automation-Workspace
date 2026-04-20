@@ -1,13 +1,14 @@
 /* Minimal UI (no build tooling): login, then show candidate pipeline and allow status changes. */
 const API_BASE = '';
 
-const STATUSES = ['new', 'contacted', 'interview', 'offer', 'hired', 'rejected'];
+const STATUSES = ['new', 'contacted', 'interview', 'offer', 'hired', 'sb_failed', 'rejected'];
 const STATUS_LABELS = {
   new: 'Новий',
   contacted: 'Контакт',
   interview: 'Співбесіда',
   offer: 'Офер',
   hired: 'Оформлений',
+  sb_failed: 'Не пройшов СБ',
   rejected: 'Відхилений',
 };
 let searchTerm = '';

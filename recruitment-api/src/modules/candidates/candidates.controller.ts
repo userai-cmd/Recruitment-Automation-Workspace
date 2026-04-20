@@ -33,6 +33,15 @@ export class CandidatesController {
     return this.candidatesService.getKpiOverview(user.id, period, date);
   }
 
+  @Get('motivation/overview')
+  getMotivationOverview(
+    @CurrentUser() user: JwtUser,
+    @Query('period') period?: string,
+    @Query('date') date?: string,
+  ) {
+    return this.candidatesService.getMotivationOverview(user.id, period, date);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.candidatesService.findOne(id);

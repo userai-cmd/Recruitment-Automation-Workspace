@@ -19,6 +19,7 @@ enum CandidateStatus {
   interview
   offer
   hired
+  sb_failed
   rejected
 }
 

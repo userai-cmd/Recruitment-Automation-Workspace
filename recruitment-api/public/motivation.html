@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="uk">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>BiG Dnipro - Мотивація</title>
+    <link rel="stylesheet" href="/ui.css" />
+    <style>
+      .toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 14px;flex-wrap:wrap}
+      .periodBtns{display:flex;gap:8px;flex-wrap:wrap}
+      .periodBtn,.miniBtn{border:1px solid rgba(103,181,255,.22);border-radius:999px;background:rgba(5,14,26,.6);color:#d9eeff;padding:8px 12px;font-size:12px;font-weight:800;cursor:pointer}
+      .periodBtn.active{background:linear-gradient(180deg,rgba(40,167,255,.98),rgba(20,102,214,.96));border-color:rgba(126,213,255,.45)}
+      .dateInput{border:1px solid rgba(103,181,255,.22);border-radius:10px;background:rgba(5,14,26,.6);color:#d9eeff;padding:8px 10px;font-size:12px;font-weight:700}
+      .periodInfo{font-size:12px;color:var(--muted)}
+      .cards{display:grid;grid-template-columns:repeat(5,minmax(150px,1fr));gap:12px;margin-bottom:14px}
+      .card{border-radius:16px;padding:12px;border:1px solid rgba(116,198,255,.22);background:linear-gradient(180deg,rgba(8,20,38,.82),rgba(5,14,28,.92))}
+      .card .v{font-size:28px;font-weight:900}
+      .card .l{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px}
+      .card .chg{margin-top:4px;font-size:11px;font-weight:700}
+      .chg.up{color:#6ef0a5}.chg.down{color:#ff9aa8}.chg.flat{color:#9eb5d6}
+      .panel{border-radius:18px;padding:14px;border:1px solid rgba(116,198,255,.22);background:linear-gradient(180deg,rgba(8,20,38,.82),rgba(5,14,28,.92))}
+      .rules{font-size:13px;color:#c6d8ee;line-height:1.6;margin-bottom:10px}
+      table{width:100%;border-collapse:collapse}
+      th,td{padding:10px 8px;border-bottom:1px solid rgba(126,213,255,.12);font-size:13px;text-align:left}
+      th{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px}
+      .sum{font-weight:900;color:#7dd3fc}
+      .empty{padding:14px;color:var(--muted)}
+      @media(max-width:1100px){.cards{grid-template-columns:repeat(2,minmax(150px,1fr))}}
+      @media(max-width:760px){.cards{grid-template-columns:1fr}}
+    </style>
+  </head>
+  <body>
+    <div id="stars"></div>
+    <div id="particles"></div>
+    <div class="page">
+      <div class="shell">
+        <nav class="top-nav">
+          <a class="brand" href="/home">
+            <img src="/big_dnipro_logo_final.png" alt="BiG Dnipro Logo" />
+            <span class="brand-text">
+              <span class="brand-title">BiG Dnipro</span>
+              <span class="brand-subtitle">Automation Control Panel</span>
+            </span>
+          </a>
+          <div class="nav-links">
+            <a href="/home">Головна</a>
+            <a href="/candidate">Анкета кандидата</a>
+            <a href="/dashboard">Кандидати</a>
+            <a href="/kpi">КПІ</a>
+            <a class="active" href="/motivation">Мотивація</a>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="status-pill"><div class="status-dot"></div>Система активна</div>
+            <button class="theme-toggle" data-theme-toggle type="button">Soft</button>
+            <div class="nav-clock">
+              <div class="nav-clock-time" id="clock">--:--:--</div>
+              <div class="nav-clock-date" id="clock-date">—</div>
+            </div>
+          </div>
+        </nav>
+
+        <section class="hero">
+          <div class="hero-content">
+            <div class="eyebrow">Recruitment Automation Workspace</div>
+            <h1 class="title">Мотивація рекрутера</h1>
+            <p class="subtitle" id="subline">Завантаження...</p>
+          </div>
+        </section>
+
+        <div class="toolbar">
+          <div class="periodBtns" id="periodBtns"></div>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <button id="prevPeriodBtn" class="miniBtn" type="button">← Попередній</button>
+            <input id="anchorDate" class="dateInput" type="date" />
+            <button id="nextPeriodBtn" class="miniBtn" type="button">Наступний →</button>
+            <button id="todayBtn" class="miniBtn" type="button">Сьогодні</button>
+            <div class="periodInfo" id="periodInfo"></div>
+          </div>
+        </div>
+
+        <div class="cards" id="summaryCards"></div>
+
+        <div class="panel">
+          <div class="rules" id="rules"></div>
+          <table>
+            <thead>
+              <tr>
+                <th>Дата</th>
+                <th>Кандидат</th>
+                <th>Причина</th>
+                <th>Сума</th>
+              </tr>
+            </thead>
+            <tbody id="detailsBody"></tbody>
+          </table>
+        </div>
+
+        <div id="loading" class="loading">Завантажую мотивацію...</div>
+        <div id="error" class="error" style="display:none"></div>
+      </div>
+    </div>
+
+    <script src="/ui.js"></script>
+    <script>
+      const PERIOD_LABELS = { day: 'День', week: 'Тиждень', month: 'Місяць', quarter: 'Квартал', year: 'Рік' };
+      let selectedPeriod = localStorage.getItem('motivationPeriod') || 'month';
+      let selectedAnchorDate = localStorage.getItem('motivationAnchorDate') || new Date().toISOString().slice(0, 10);
+
+      function authHeaders() {
+        const token = localStorage.getItem('accessToken') || '';
+        if (!token) {
+          window.location.href = '/';
+          return null;
+        }
+        return { Authorization: `Bearer ${token}` };
+      }
+      function fmtDate(iso) { return new Date(iso).toLocaleDateString('uk-UA'); }
+      function fmtChange(v) { return v > 0 ? { t: `+${v}%`, c: 'up' } : v < 0 ? { t: `${v}%`, c: 'down' } : { t: '0%', c: 'flat' }; }
+      function setError(msg) {
+        const e = document.getElementById('error');
+        const l = document.getElementById('loading');
+        e.style.display = 'block';
+        e.textContent = msg;
+        if (l) l.style.display = 'none';
+      }
+
+      function renderPeriodButtons() {
+        const root = document.getElementById('periodBtns');
+        const periods = ['day', 'week', 'month', 'quarter', 'year'];
+        root.innerHTML = periods.map((p) => `<button type="button" class="periodBtn ${selectedPeriod === p ? 'active' : ''}" data-period="${p}">${PERIOD_LABELS[p]}</button>`).join('');
+        root.querySelectorAll('.periodBtn').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            selectedPeriod = btn.dataset.period || 'month';
+            localStorage.setItem('motivationPeriod', selectedPeriod);
+            renderPeriodButtons();
+            loadMotivation();
+          });
+        });
+      }
+
+      function bindDateControls() {
+        const d = document.getElementById('anchorDate');
+        const prev = document.getElementById('prevPeriodBtn');
+        const next = document.getElementById('nextPeriodBtn');
+        const today = document.getElementById('todayBtn');
+        const step = (direction) => {
+          const x = new Date(`${selectedAnchorDate}T00:00:00`);
+          if (selectedPeriod === 'day') x.setDate(x.getDate() + direction);
+          if (selectedPeriod === 'week') x.setDate(x.getDate() + direction * 7);
+          if (selectedPeriod === 'month') x.setMonth(x.getMonth() + direction);
+          if (selectedPeriod === 'quarter') x.setMonth(x.getMonth() + direction * 3);
+          if (selectedPeriod === 'year') x.setFullYear(x.getFullYear() + direction);
+          selectedAnchorDate = x.toISOString().slice(0, 10);
+          localStorage.setItem('motivationAnchorDate', selectedAnchorDate);
+          d.value = selectedAnchorDate;
+        };
+        d.value = selectedAnchorDate;
+        d.addEventListener('change', () => {
+          selectedAnchorDate = d.value || new Date().toISOString().slice(0, 10);
+          localStorage.setItem('motivationAnchorDate', selectedAnchorDate);
+          loadMotivation();
+        });
+        prev.addEventListener('click', () => { step(-1); loadMotivation(); });
+        next.addEventListener('click', () => { step(1); loadMotivation(); });
+        today.addEventListener('click', () => {
+          selectedAnchorDate = new Date().toISOString().slice(0, 10);
+          localStorage.setItem('motivationAnchorDate', selectedAnchorDate);
+          d.value = selectedAnchorDate;
+          loadMotivation();
+        });
+      }
+
+      function renderSummary(summary) {
+        const ch = fmtChange(summary.totalChangePct || 0);
+        const cards = [
+          ['Оформлені (не рекомендація)', summary.hiredCount],
+          ['Не пройшли СБ', summary.sbFailedCount],
+          ['Бонус за оформлених', `${summary.hiredBonus} грн`],
+          ['Бонус за СБ', `${summary.sbFailedBonus} грн`],
+          ['Разом', `${summary.totalBonus} грн`],
+        ];
+        document.getElementById('summaryCards').innerHTML = cards.map(([label, value], idx) =>
+          `<div class="card"><div class="v">${value}</div><div class="l">${label}</div>${idx === 4 ? `<div class="chg ${ch.c}">${ch.t} vs попер. період</div>` : ''}</div>`
+        ).join('');
+      }
+
+      function renderDetails(details) {
+        const body = document.getElementById('detailsBody');
+        if (!details.length) {
+          body.innerHTML = '<tr><td colspan="4" class="empty">За обраний період нарахувань немає.</td></tr>';
+          return;
+        }
+        body.innerHTML = details.map((d) =>
+          `<tr><td>${fmtDate(d.changedAt)}</td><td>${d.candidateName}</td><td>${d.reason}</td><td class="sum">${d.amount} грн</td></tr>`
+        ).join('');
+      }
+
+      async function loadMotivation() {
+        const headers = authHeaders();
+        if (!headers) return;
+        try {
+          const meRes = await fetch('/auth/me', { headers });
+          if (!meRes.ok) throw new Error('auth failed');
+          const me = await meRes.json();
+          document.getElementById('subline').textContent = `Ви: ${me.email} (${me.role})`;
+
+          const query = new URLSearchParams({ period: selectedPeriod, date: selectedAnchorDate });
+          const res = await fetch(`/candidates/motivation/overview?${query.toString()}`, { headers });
+          if (!res.ok) throw new Error('motivation request failed');
+          const data = await res.json();
+
+          const toIncl = new Date(new Date(data.period.to).getTime() - 1);
+          document.getElementById('periodInfo').textContent = `Період: ${fmtDate(data.period.from)} - ${toIncl.toLocaleDateString('uk-UA')}`;
+          document.getElementById('rules').textContent =
+            `Правила: +${data.rules.hiredBonusPerCandidate} грн за оформленого (крім рекомендації), +${data.rules.sbFailedBonusPerCandidate} грн за кандидата, що не пройшов СБ.`;
+          renderSummary(data.summary);
+          renderDetails(data.details);
+          const loading = document.getElementById('loading');
+          if (loading) loading.style.display = 'none';
+        } catch (e) {
+          setError(String(e?.message || e));
+        }
+      }
+
+      window.UI?.initStarsAndParticles();
+      window.UI?.initClock();
+      window.UI?.setActiveNav('/motivation');
+      window.UI?.initThemeToggle();
+      renderPeriodButtons();
+      bindDateControls();
+      loadMotivation();
+    </script>
+  </body>
+</html>

@@ -44,6 +44,7 @@
       .statusSelect.status-interview{border-color:rgba(170,130,255,.45);color:#dac7ff}
       .statusSelect.status-offer{border-color:rgba(255,198,90,.45);color:#ffe0a6}
       .statusSelect.status-hired{border-color:rgba(95,228,128,.45);color:#bdf5c8}
+      .statusSelect.status-sb_failed{border-color:rgba(255,126,95,.45);color:#ffd0bd}
       .statusSelect.status-rejected{border-color:rgba(255,120,140,.45);color:#ffcad4}
       .rowAction{
         display:inline-flex;align-items:center;justify-content:center;
@@ -110,6 +111,7 @@
             <a href="/candidate">Анкета кандидата</a>
             <a class="active" href="/dashboard">Кандидати</a>
             <a href="/kpi">КПІ</a>
+            <a href="/motivation">Мотивація</a>
           </div>
           <div style="display:flex;align-items:center;gap:10px">
             <div class="status-pill"><div class="status-dot"></div>Система активна</div>
@@ -153,6 +155,7 @@
             <option value="interview">Співбесіда</option>
             <option value="offer">Офер</option>
             <option value="hired">Оформлений</option>
+            <option value="sb_failed">Не пройшов СБ</option>
             <option value="rejected">Відхилений</option>
           </select>
           <select id="positionFilter" class="filterSelect">
