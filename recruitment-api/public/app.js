@@ -573,10 +573,6 @@ async function loadCandidatesTable() {
       opt.textContent = `${u.fullName || u.email}${u.isActive ? '' : ' (inactive)'}`;
       recruiterFilter.appendChild(opt);
     });
-    if (!selectedRecruiterId) {
-      const firstActive = recruiters.find((u) => u.isActive);
-      selectedRecruiterId = firstActive?.id || recruiters[0]?.id || '';
-    }
     recruiterFilter.value = selectedRecruiterId;
   } else if (recruiterFilter) {
     recruiterFilter.style.display = 'none';
