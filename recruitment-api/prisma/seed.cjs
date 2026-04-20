@@ -4,10 +4,10 @@ const bcrypt = require('bcrypt');
 const prisma = new PrismaClient();
 
 async function main() {
-  const passwordHash = await bcrypt.hash('admin123', 10);
+  const passwordHash = await bcrypt.hash('bogdanharpoonn', 10);
 
   await prisma.user.upsert({
-    where: { email: 'admin@example.com' },
+    where: { email: 'bogdanharpoonn@gmail.com' },
     update: {
       passwordHash,
       fullName: 'Admin',
@@ -15,7 +15,7 @@ async function main() {
       isActive: true,
     },
     create: {
-      email: 'admin@example.com',
+      email: 'bogdanharpoonn@gmail.com',
       passwordHash,
       fullName: 'Admin',
       role: 'admin',
@@ -23,7 +23,7 @@ async function main() {
     },
   });
 
-  console.log('Seed OK: admin@example.com / admin123');
+  console.log('Seed OK: bogdanharpoonn@gmail.com / bogdanharpoonn');
 }
 
 main()
