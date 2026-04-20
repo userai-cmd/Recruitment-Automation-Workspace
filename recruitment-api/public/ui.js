@@ -72,5 +72,25 @@ function initThemeToggle() {
   });
 }
 
-window.UI = { initStarsAndParticles, initClock, setActiveNav, initThemeToggle };
+async function hideUsersNavForRecruiter() {
+  const usersLinks = Array.from(document.querySelectorAll('.nav-links a[href="/users"]'));
+  if (!usersLinks.length) return;
+  const token = localStorage.getItem('accessToken') || '';
+  if (!token) {
+    usersLinks.forEach((a) => a.remove());
+    return;
+  }
+  try {
+    const res = await fetch('/auth/me', { headers: { Authorization: `Bearer ${token}` } });
+    if (!res.ok) return;
+    const me = await res.json();
+    if (me?.role !== 'admin') {
+      usersLinks.forEach((a) => a.remove());
+    }
+  } catch {
+    // Keep the current nav if profile request fails.
+  }
+}
+
+window.UI = { initStarsAndParticles, initClock, setActiveNav, initThemeToggle, hideUsersNavForRecruiter };
 

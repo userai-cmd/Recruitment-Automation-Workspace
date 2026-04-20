@@ -1,7 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
+import { JwtUser } from '../../common/decorators/current-user.decorator';
 
 @Injectable()
 export class TasksService {
@@ -51,9 +52,12 @@ export class TasksService {
     }));
   }
 
-  async update(id: string, dto: UpdateTaskDto) {
+  async update(id: string, dto: UpdateTaskDto, actor: JwtUser) {
     const existing = await this.prisma.task.findUnique({ where: { id } });
     if (!existing) throw new NotFoundException('Task not found');
+    if (actor.role !== 'admin' && existing.assigneeUserId !== actor.id) {
+      throw new ForbiddenException('Access denied for this task');
+    }
     return this.prisma.task.update({
       where: { id },
       data: {
