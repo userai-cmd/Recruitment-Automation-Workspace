@@ -110,6 +110,34 @@ body::after{background:
 .cardPanel{position:relative;width:100%;padding:28px 24px 22px;border-radius:28px;background:linear-gradient(180deg,rgba(8,20,38,0.82),rgba(5,14,28,0.92));
   border:1px solid rgba(116,198,255,0.28);box-shadow:inset 0 0 0 1px rgba(255,255,255,0.02),inset 0 0 26px rgba(40,167,255,0.05),0 18px 46px rgba(0,0,0,0.4),0 0 18px rgba(40,167,255,0.08)}
 
+@media(max-width:1200px){
+  .top-nav{
+    grid-template-columns:minmax(0,1fr) auto;
+    grid-template-areas:
+      "brand right"
+      "links links";
+    align-items:start;
+  }
+  .brand{grid-area:brand}
+  .top-nav > div:last-child{grid-area:right}
+  .nav-links{grid-area:links;justify-content:flex-start}
+}
+
+@media(max-width:980px){
+  .top-nav{
+    grid-template-columns:1fr;
+    grid-template-areas:
+      "brand"
+      "right"
+      "links";
+    gap:10px;
+  }
+  .top-nav > div:last-child{justify-content:flex-start}
+  .brand-subtitle{font-size:12px;letter-spacing:1.1px}
+  .nav-links a{padding:9px 12px;font-size:12px}
+  .theme-toggle{padding:8px 10px}
+}
+
 @media(max-width:760px){
   .page{padding:14px 12px 30px}.top-nav{padding:10px;border-radius:16px}
   .nav-links,.nav-clock,.status-pill{display:none}
