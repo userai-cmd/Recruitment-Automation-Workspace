@@ -88,18 +88,18 @@ export class CandidatesService {
     return Math.round(((current - previous) / previous) * 100);
   }
 
-  private async computeSummaryForRange(recruiterId: string, from: Date, to: Date) {
+  private async computeSummaryForRange(recruiterId: string | undefined, from: Date, to: Date) {
     const [createdCount, changedRows] = await Promise.all([
       this.prisma.candidate.count({
         where: {
-          assignedRecruiterId: recruiterId,
+          assignedRecruiterId: recruiterId || undefined,
           isDeleted: false,
           createdAt: { gte: from, lt: to },
         },
       }),
       this.prisma.candidateStatusHistory.findMany({
         where: {
-          changedByUserId: recruiterId,
+          changedByUserId: recruiterId || undefined,
           changedAt: { gte: from, lt: to },
         },
         select: { toStatus: true },
@@ -273,7 +273,7 @@ export class CandidatesService {
     });
   }
 
-  async getKpiOverview(recruiterId: string, periodInput?: string, dateInput?: string) {
+  async getKpiOverview(recruiterId: string | undefined, periodInput?: string, dateInput?: string) {
     const period = this.parsePeriod(periodInput);
     const anchorDate = this.parseAnchorDate(dateInput);
     const currentRange = this.getRange(period, anchorDate);
@@ -284,7 +284,7 @@ export class CandidatesService {
       this.computeSummaryForRange(recruiterId, prevRange.from, prevRange.to),
       this.prisma.candidate.findMany({
         where: {
-          assignedRecruiterId: recruiterId,
+          assignedRecruiterId: recruiterId || undefined,
           isDeleted: false,
           createdAt: { gte: currentRange.from, lt: currentRange.to },
         },
@@ -345,7 +345,7 @@ export class CandidatesService {
     };
   }
 
-  async getMotivationOverview(recruiterId: string, periodInput?: string, dateInput?: string) {
+  async getMotivationOverview(recruiterId: string | undefined, periodInput?: string, dateInput?: string) {
     const period = this.parsePeriod(periodInput);
     const anchorDate = this.parseAnchorDate(dateInput);
     const currentRange = this.getRange(period, anchorDate);
@@ -354,7 +354,7 @@ export class CandidatesService {
     const [currentHiredRows, currentSbRows, prevHiredRows, prevSbRows] = await Promise.all([
       this.prisma.candidateStatusHistory.findMany({
         where: {
-          changedByUserId: recruiterId,
+          changedByUserId: recruiterId || undefined,
           toStatus: 'hired',
           changedAt: { gte: currentRange.from, lt: currentRange.to },
         },
@@ -368,7 +368,7 @@ export class CandidatesService {
       }),
       this.prisma.candidateStatusHistory.findMany({
         where: {
-          changedByUserId: recruiterId,
+          changedByUserId: recruiterId || undefined,
           toStatus: 'sb_failed',
           changedAt: { gte: currentRange.from, lt: currentRange.to },
         },
@@ -382,7 +382,7 @@ export class CandidatesService {
       }),
       this.prisma.candidateStatusHistory.findMany({
         where: {
-          changedByUserId: recruiterId,
+          changedByUserId: recruiterId || undefined,
           toStatus: 'hired',
           changedAt: { gte: prevRange.from, lt: prevRange.to },
         },
@@ -395,7 +395,7 @@ export class CandidatesService {
       }),
       this.prisma.candidateStatusHistory.findMany({
         where: {
-          changedByUserId: recruiterId,
+          changedByUserId: recruiterId || undefined,
           toStatus: 'sb_failed',
           changedAt: { gte: prevRange.from, lt: prevRange.to },
         },

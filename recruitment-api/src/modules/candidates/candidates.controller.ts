@@ -34,7 +34,7 @@ export class CandidatesController {
     @Query('date') date?: string,
     @Query('recruiterId') recruiterId?: string,
   ) {
-    const effectiveRecruiterId = user.role === 'admin' ? recruiterId || user.id : user.id;
+    const effectiveRecruiterId = user.role === 'admin' ? recruiterId : user.id;
     return this.candidatesService.getKpiOverview(effectiveRecruiterId, period, date);
   }
 
@@ -45,7 +45,7 @@ export class CandidatesController {
     @Query('date') date?: string,
     @Query('recruiterId') recruiterId?: string,
   ) {
-    const effectiveRecruiterId = user.role === 'admin' ? recruiterId || user.id : user.id;
+    const effectiveRecruiterId = user.role === 'admin' ? recruiterId : user.id;
     return this.candidatesService.getMotivationOverview(effectiveRecruiterId, period, date);
   }
 

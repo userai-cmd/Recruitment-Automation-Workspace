@@ -156,45 +156,15 @@
     </div>
 
     <script src="/ui.js"></script>
-    <script src="/app.js"></script>
     <script>
-      (function initKpiThemeAndClock() {
-        const readTheme = () => (localStorage.getItem('uiTheme') === 'soft' ? 'soft' : 'dark');
-        const applyTheme = (theme) => {
-          const next = theme === 'soft' ? 'soft' : 'dark';
-          document.documentElement.setAttribute('data-theme', next);
-          localStorage.setItem('uiTheme', next);
-          const toggle = document.querySelector('[data-theme-toggle]');
-          if (toggle) toggle.textContent = next === 'soft' ? 'Dark' : 'Soft';
-        };
-        applyTheme(readTheme());
-        const toggle = document.querySelector('[data-theme-toggle]');
-        if (toggle && !toggle.dataset.boundKpiThemeToggle) {
-          toggle.dataset.boundKpiThemeToggle = '1';
-          toggle.addEventListener('click', () => {
-            const current = document.documentElement.getAttribute('data-theme') || 'dark';
-            applyTheme(current === 'soft' ? 'dark' : 'soft');
-          });
-        }
-        const clockEl = document.getElementById('clock');
-        const dateEl = document.getElementById('clock-date');
-        if (clockEl && dateEl) {
-          const days = ['Неділя', 'Понеділок', 'Вівторок', 'Середа', 'Четвер', "П'ятниця", 'Субота'];
-          const months = ['січня', 'лютого', 'березня', 'квітня', 'травня', 'червня', 'липня', 'серпня', 'вересня', 'жовтня', 'листопада', 'грудня'];
-          const pad = (n) => String(n).padStart(2, '0');
-          const updateClock = () => {
-            const now = new Date();
-            clockEl.textContent = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
-            dateEl.textContent = `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]}`;
-          };
-          updateClock();
-          if (!window.__kpiClockTimer) window.__kpiClockTimer = setInterval(updateClock, 1000);
-        }
-      })();
-
-      window.UI?.initStarsAndParticles();
-      window.UI?.setActiveNav('/kpi');
-      window.UI?.hideUsersNavForRecruiter?.();
+      (function () {
+      function safeInitUi() {
+        try { window.UI?.initStarsAndParticles(); } catch (_) {}
+        try { window.UI?.initClock(); } catch (_) {}
+        try { window.UI?.setActiveNav('/kpi'); } catch (_) {}
+        try { window.UI?.initThemeToggle(); } catch (_) {}
+        try { window.UI?.hideUsersNavForRecruiter?.(); } catch (_) {}
+      }
 
       const statusColors = ['#7cc3ff', '#7de5c1', '#b39aff', '#9ee44f', '#f5b25c', '#f28aa0'];
 
@@ -214,6 +184,9 @@
         err.textContent = msg;
         if (loading) loading.style.display = 'none';
       }
+      window.addEventListener('error', (e) => {
+        showError(`JS error: ${e.message}`);
+      });
 
       function fmtChange(v) {
         if (v > 0) return { text: `+${v}%`, cls: 'up' };
@@ -246,7 +219,7 @@
         year: 'Рік',
       };
       let selectedPeriod = localStorage.getItem('kpiPeriod') || 'month';
-      let selectedAnchorDate = localStorage.getItem('kpiAnchorDate') || new Date().toISOString().slice(0, 10);
+      let selectedAnchorDate = new Date().toISOString().slice(0, 10);
       let selectedRecruiterId = '';
 
       function fmtDate(iso) {
@@ -263,11 +236,11 @@
       function renderPeriodButtons() {
         const root = document.getElementById('periodBtns');
         if (!root) return;
-        const periods = ['day', 'week', 'month', 'quarter', 'year'];
-        root.innerHTML = periods
-          .map((p) => `<button type="button" class="periodBtn ${selectedPeriod === p ? 'active' : ''}" data-period="${p}">${PERIOD_LABELS[p]}</button>`)
-          .join('');
         root.querySelectorAll('.periodBtn').forEach((btn) => {
+          const periodKey = btn.dataset.period || 'month';
+          btn.classList.toggle('active', periodKey === selectedPeriod);
+          if (btn.dataset.boundPeriodBtn === '1') return;
+          btn.dataset.boundPeriodBtn = '1';
           btn.addEventListener('click', () => {
             selectedPeriod = btn.dataset.period || 'month';
             localStorage.setItem('kpiPeriod', selectedPeriod);
@@ -297,14 +270,12 @@
           dateInput.value = selectedAnchorDate;
           dateInput.addEventListener('change', () => {
             selectedAnchorDate = dateInput.value || new Date().toISOString().slice(0, 10);
-            localStorage.setItem('kpiAnchorDate', selectedAnchorDate);
             loadKpi();
           });
         }
         if (todayBtn) {
           todayBtn.addEventListener('click', () => {
             selectedAnchorDate = new Date().toISOString().slice(0, 10);
-            localStorage.setItem('kpiAnchorDate', selectedAnchorDate);
             if (dateInput) dateInput.value = selectedAnchorDate;
             loadKpi();
           });
@@ -312,7 +283,6 @@
         if (prevBtn) {
           prevBtn.addEventListener('click', () => {
             selectedAnchorDate = stepByPeriod(selectedAnchorDate, selectedPeriod, -1);
-            localStorage.setItem('kpiAnchorDate', selectedAnchorDate);
             if (dateInput) dateInput.value = selectedAnchorDate;
             loadKpi();
           });
@@ -320,7 +290,6 @@
         if (nextBtn) {
           nextBtn.addEventListener('click', () => {
             selectedAnchorDate = stepByPeriod(selectedAnchorDate, selectedPeriod, 1);
-            localStorage.setItem('kpiAnchorDate', selectedAnchorDate);
             if (dateInput) dateInput.value = selectedAnchorDate;
             loadKpi();
           });
@@ -371,28 +340,24 @@
 
       async function loadKpi() {
         const headers = authHeaders();
-        if (!headers) return;
+        if (!headers) {
+          return;
+        }
         try {
-          const meRes = await fetch('/auth/me', { headers });
-          if (!meRes.ok) throw new Error('auth failed');
-          const me = await meRes.json();
-          document.getElementById('subline').textContent = `Ви: ${me.email} (${me.role})`;
-          const recruiterFilter = document.getElementById('recruiterFilter');
-          if (me.role === 'admin' && recruiterFilter) {
-            const usersRes = await fetch('/auth/users', { headers });
-            if (!usersRes.ok) throw new Error('users request failed');
-            const users = await usersRes.json();
-            const recruiters = users.filter((u) => u.role === 'recruiter');
-            recruiterFilter.style.display = '';
-            recruiterFilter.innerHTML = recruiters
-              .map((u) => `<option value="${u.id}">${u.fullName || u.email}${u.isActive ? '' : ' (inactive)'}</option>`)
-              .join('');
-            if (!selectedRecruiterId) {
-              const firstActive = recruiters.find((u) => u.isActive);
-              selectedRecruiterId = firstActive?.id || recruiters[0]?.id || '';
+          let me = null;
+          try {
+            const meRes = await fetch('/auth/me', { headers });
+            if (meRes.ok) {
+              me = await meRes.json();
+              document.getElementById('subline').textContent = `Ви: ${me.email} (${me.role})`;
             }
-            recruiterFilter.value = selectedRecruiterId;
-          } else if (recruiterFilter) {
+          } catch (_) {
+            // continue in fallback mode
+          }
+          const recruiterFilter = document.getElementById('recruiterFilter');
+          if (me?.role === 'admin' && recruiterFilter) {
+            recruiterFilter.style.display = '';
+          } else if (recruiterFilter && me) {
             recruiterFilter.style.display = 'none';
             selectedRecruiterId = me.id;
           }
@@ -415,21 +380,45 @@
 
           const loading = document.getElementById('loading');
           if (loading) loading.style.display = 'none';
+
+          // Load recruiter options after KPI is rendered, so this can never block KPI data.
+          if (me?.role === 'admin' && recruiterFilter) {
+            recruiterFilter.innerHTML = `<option value="">Всі рекрутери</option>`;
+            try {
+              const usersRes = await fetch('/auth/users', { headers });
+              if (usersRes.ok) {
+                const users = await usersRes.json();
+                const recruiters = users.filter((u) => u.role === 'recruiter');
+                recruiterFilter.innerHTML = [
+                  `<option value="">Всі рекрутери</option>`,
+                  ...recruiters.map(
+                    (u) => `<option value="${u.id}">${u.fullName || u.email}${u.isActive ? '' : ' (inactive)'}</option>`,
+                  ),
+                ].join('');
+                recruiterFilter.value = selectedRecruiterId || '';
+              }
+            } catch (_) {
+              // Keep default "all recruiters" option.
+            }
+          }
         } catch (e) {
           showError(String(e?.message || e));
         }
       }
 
+      safeInitUi();
       renderPeriodButtons();
       bindAnchorDateControls();
       const recruiterFilter = document.getElementById('recruiterFilter');
-      if (recruiterFilter) {
+      if (recruiterFilter && recruiterFilter.dataset.boundKpiRecruiter !== '1') {
+        recruiterFilter.dataset.boundKpiRecruiter = '1';
         recruiterFilter.addEventListener('change', () => {
           selectedRecruiterId = recruiterFilter.value || '';
           loadKpi();
         });
       }
       loadKpi();
+      })();
     </script>
   </body>
 </html>
