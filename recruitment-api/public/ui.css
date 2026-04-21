@@ -47,7 +47,7 @@ body::after{background:
 /* NAV */
 .top-nav{position:relative;display:grid;grid-template-columns:1fr auto;align-items:center;gap:14px;padding:10px 14px;border:1px solid rgba(106,184,255,0.14);
   border-radius:18px;background:linear-gradient(180deg,rgba(7,16,31,0.82),rgba(4,12,24,0.72));
-  box-shadow:inset 0 1px 0 rgba(255,255,255,0.03),0 18px 40px rgba(0,0,0,0.28);overflow:hidden;margin-bottom:22px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.03),0 18px 40px rgba(0,0,0,0.28);overflow:visible;margin-bottom:22px;
   width:100vw;
   margin-left:calc(50% - 50vw - ((var(--page-left-pad) - var(--page-right-pad)) / 2));
   margin-right:calc(50% - 50vw - ((var(--page-left-pad) - var(--page-right-pad)) / 2));

@@ -569,7 +569,8 @@ function refreshCandidatesView() {
 
 async function loadCandidatesTable() {
   dashboardUser = await api('/auth/me');
-  document.getElementById('subline').textContent = `Ви: ${dashboardUser.email} (${dashboardUser.role})`;
+  const sublineEl = document.getElementById('subline');
+  if (sublineEl) sublineEl.textContent = `Ви: ${dashboardUser.email} (${dashboardUser.role})`;
   
   const recruiterFilter = document.getElementById('recruiterFilter');
   if (dashboardUser.role === 'admin' && recruiterFilter) {
@@ -699,9 +700,51 @@ function bindDashboardFilters() {
   }
 }
 
+async function checkPhoneDuplicate(phone) {
+  if (!phone || phone.trim().length < 5) return null;
+  try {
+    const token = getToken();
+    const normalized = phone.trim().replace(/\s/g, '');
+    const res = await fetch(`/candidates?phone=${encodeURIComponent(normalized)}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) return null;
+    const list = await res.json();
+    return Array.isArray(list) && list.length > 0 ? list[0] : null;
+  } catch (_) {
+    return null;
+  }
+}
+
 function bindCandidatePage() {
   const form = document.getElementById('candidatePageForm');
   if (!form) return;
+
+  const phoneInput = document.getElementById('pPhone');
+  const dupWarn = document.getElementById('phoneDupWarn');
+  let dupConfirmed = false;
+
+  if (phoneInput && dupWarn) {
+    phoneInput.addEventListener('blur', async () => {
+      dupWarn.style.display = 'none';
+      dupConfirmed = false;
+      const dup = await checkPhoneDuplicate(phoneInput.value);
+      if (dup) {
+        const statusLabel = {
+          new: 'Новий', contacted: 'Контакт', interview: 'Співбесіда',
+          offer: 'Офер', hired: 'Оформлений', sb_failed: 'Не пройшов СБ', rejected: 'Відхилений',
+        }[dup.status] || dup.status;
+        dupWarn.innerHTML = `⚠️ <strong>Дублікат!</strong> Кандидат з таким номером вже існує:<br>
+          <strong>${dup.fullName}</strong> · ${dup.phone} · Статус: <strong>${statusLabel}</strong><br>
+          <a href="/dashboard" style="color:#ffd080;text-decoration:underline">Переглянути в базі</a>`;
+        dupWarn.style.display = 'block';
+      }
+    });
+    phoneInput.addEventListener('input', () => {
+      dupWarn.style.display = 'none';
+      dupConfirmed = false;
+    });
+  }
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -711,6 +754,21 @@ function bindCandidatePage() {
     if (err) err.style.display = 'none';
 
     try {
+      if (!dupConfirmed && phoneInput) {
+        const dup = await checkPhoneDuplicate(phoneInput.value);
+        if (dup) {
+          const statusLabel = {
+            new: 'Новий', contacted: 'Контакт', interview: 'Співбесіда',
+            offer: 'Офер', hired: 'Оформлений', sb_failed: 'Не пройшов СБ', rejected: 'Відхилений',
+          }[dup.status] || dup.status;
+          const proceed = window.confirm(
+            `⚠️ Кандидат з таким номером вже існує:\n\n${dup.fullName} · ${dup.phone}\nСтатус: ${statusLabel}\n\nДодати все одно?`,
+          );
+          if (!proceed) return;
+          dupConfirmed = true;
+        }
+      }
+
       let assignedRecruiterId = getUserIdFromToken();
       if (!assignedRecruiterId) {
         const me = await api('/auth/me');
@@ -729,6 +787,7 @@ function bindCandidatePage() {
       await api('/candidates', { method: 'POST', body: JSON.stringify(payload) });
       if (ok) ok.style.display = 'block';
       form.reset();
+      if (dupWarn) dupWarn.style.display = 'none';
       setTimeout(() => { window.location.href = '/dashboard'; }, 650);
     } catch (e2) {
       if (err) {

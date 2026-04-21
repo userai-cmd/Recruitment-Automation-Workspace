@@ -16,9 +16,10 @@ export class CandidatesController {
     @CurrentUser() user: JwtUser,
     @Query('status') status?: string,
     @Query('recruiterId') recruiterId?: string,
+    @Query('phone') phone?: string,
   ) {
     const effectiveRecruiterId = user.role === 'admin' ? recruiterId : user.id;
-    return this.candidatesService.findAll({ status, recruiterId: effectiveRecruiterId });
+    return this.candidatesService.findAll({ status, recruiterId: effectiveRecruiterId, phone });
   }
 
   @Post()

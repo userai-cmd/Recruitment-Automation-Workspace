@@ -131,12 +131,13 @@ export class CandidatesService {
     };
   }
 
-  findAll(query: { status?: string; recruiterId?: string }) {
+  findAll(query: { status?: string; recruiterId?: string; phone?: string }) {
     return this.prisma.candidate.findMany({
       where: {
         status: (query.status || undefined) as any,
         assignedRecruiterId: query.recruiterId || undefined,
         isDeleted: false,
+        ...(query.phone ? { phone: { contains: query.phone } } : {}),
       },
       include: {
         assignedRecruiter: {
