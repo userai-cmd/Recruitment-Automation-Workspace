@@ -47,7 +47,8 @@ body::after{background:
 /* NAV */
 .top-nav{position:relative;display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:14px;padding:10px 14px;border:1px solid rgba(106,184,255,0.14);
   border-radius:18px;background:linear-gradient(180deg,rgba(7,16,31,0.82),rgba(4,12,24,0.72));
-  box-shadow:inset 0 1px 0 rgba(255,255,255,0.03),0 18px 40px rgba(0,0,0,0.28);overflow:hidden;margin-bottom:22px}
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.03),0 18px 40px rgba(0,0,0,0.28);overflow:hidden;margin-bottom:22px;
+  width:100vw;margin-left:calc(50% - 50vw);margin-right:calc(50% - 50vw);padding-left:20px;padding-right:20px;border-radius:0 0 18px 18px}
 .top-nav::before{content:"";position:absolute;left:0;right:0;top:0;height:1px;background:linear-gradient(90deg,transparent,rgba(134,219,255,0.75),transparent);opacity:.7}
 .brand{display:inline-flex;align-items:center;gap:14px;text-decoration:none;min-width:0;transition:filter .25s}
 .brand:hover{filter:drop-shadow(0 0 12px rgba(0,200,255,0.3))}
@@ -139,7 +140,7 @@ body::after{background:
 }
 
 @media(max-width:760px){
-  .page{padding:14px 12px 30px}.top-nav{padding:10px;border-radius:16px}
+  .page{padding:14px 12px 30px}.top-nav{padding:10px 12px;border-radius:0 0 14px 14px}
   .nav-links,.nav-clock,.status-pill{display:none}
   .theme-toggle{display:none}
   .hero{padding:22px 14px 18px;border-radius:24px}
