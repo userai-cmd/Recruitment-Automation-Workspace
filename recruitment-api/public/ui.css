@@ -85,6 +85,10 @@ body::after{background:
   white-space:nowrap;
   overflow:hidden;
   text-overflow:ellipsis;
+  justify-self:start;
+}
+.top-nav > .page-mini-title{
+  margin-left:calc(var(--page-left-pad) - 20px);
 }
 .nav-clock{display:flex;flex-direction:column;align-items:flex-end;padding:6px 14px;border-radius:10px;background:rgba(0,12,35,0.7);
   border:1px solid rgba(0,150,255,0.2);flex-shrink:0}
@@ -160,6 +164,7 @@ body::after{background:
       "links";
     gap:10px;
   }
+  .top-nav > .page-mini-title{margin-left:0}
   .top-nav > div:last-child{justify-content:flex-start}
   .brand-subtitle{font-size:12px;letter-spacing:1.1px}
   .nav-links a{padding:9px 12px;font-size:12px}
