@@ -61,18 +61,21 @@ body::after{background:
 .top-nav .brand{
   grid-column:2;
   justify-self:center;
-  transform:translateX(36px);
+  transform:none;
 }
 .brand-subtitle{
   font-size:21px;
   font-weight:800;
-  color:#d9eeff;
+  color:#6ea8de;
   text-transform:none;
   letter-spacing:1.2px;
   margin-top:0;
   text-shadow:
-    0 0 1px rgba(255, 209, 59, 0.45),
-    0 0 8px rgba(255, 176, 0, 0.2);
+    -1px 0 rgba(255,255,255,0.72),
+    1px 0 rgba(255,255,255,0.72),
+    0 -1px rgba(255,255,255,0.72),
+    0 1px rgba(255,255,255,0.72),
+    0 0 12px rgba(255,255,255,0.18);
 }
 .nav-links{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;min-width:0}
 .nav-links a{text-decoration:none;color:#d9eeff;font-size:13px;font-weight:700;padding:11px 16px;border-radius:12px;border:1px solid rgba(103,181,255,0.14);background:rgba(5,14,26,0.54);transition:.25s ease}
@@ -218,10 +221,13 @@ body::after{background:
   text-shadow:none !important;
 }
 :root[data-theme='soft'] .brand-subtitle{
-  color:#0d213d !important;
+  color:#215a93 !important;
   text-shadow:
-    0 0 1px rgba(255, 201, 71, 0.3),
-    0 0 6px rgba(255, 201, 71, 0.15) !important;
+    -1px 0 rgba(255,255,255,0.6),
+    1px 0 rgba(255,255,255,0.6),
+    0 -1px rgba(255,255,255,0.6),
+    0 1px rgba(255,255,255,0.6),
+    0 0 8px rgba(255,255,255,0.14) !important;
 }
 :root[data-theme='soft'] .formTitle,
 :root[data-theme='soft'] .formTag,
