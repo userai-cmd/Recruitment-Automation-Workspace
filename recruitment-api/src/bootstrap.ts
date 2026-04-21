@@ -24,7 +24,14 @@ export async function createApp(): Promise<NestExpressApplication> {
     res.sendFile(join(publicDir, fileName));
   };
 
-  app.useStaticAssets(publicDir);
+  app.useStaticAssets(publicDir, {
+    setHeaders: (res: Response) => {
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+      res.setHeader('Surrogate-Control', 'no-store');
+    },
+  });
 
   expressApp.get('/big_dnipro_logo_final.png', (_req: Request, res: Response) =>
     res.sendFile(join(publicDir, 'big_dnipro_logo_final.png')),
