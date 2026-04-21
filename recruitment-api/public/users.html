@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>SAT_Recrut - Користувачі</title>
+    <title>SAT Recruitment Platform - Користувачі</title>
     <link rel="stylesheet" href="/ui.css" />
     <style>
       .panel{border-radius:18px;padding:14px;border:1px solid rgba(116,198,255,.22);background:linear-gradient(180deg,rgba(8,20,38,.82),rgba(5,14,28,.92))}
@@ -25,43 +25,66 @@
   <body>
     <div id="stars"></div>
     <div id="particles"></div>
-    <div class="page">
-      <div class="shell">
-        <nav class="top-nav">
-          <a class="brand" href="/home"><span class="brand-text"><span class="brand-title">SAT_Recrut</span><span class="brand-subtitle">Recruitment Platform</span></span></a>
-          <div class="nav-links">
-            <a href="/home">Головна</a>
-            <a href="/candidate">Анкета кандидата</a>
-            <a href="/dashboard">Кандидати</a>
-            <a href="/kpi">КПІ</a>
-            <a href="/motivation">Мотивація</a>
-            <a class="active" href="/users">Користувачі</a>
-          </div>
-        </nav>
-        <section class="hero">
-          <div class="hero-content">
-            <div class="eyebrow">Admin panel</div>
-            <h1 class="title">Користувачі</h1>
-            <p class="subtitle" id="subline">Завантаження...</p>
-          </div>
-        </section>
-        <div class="panel">
-          <form id="createUserForm" class="formGrid">
-            <label class="field">Email<input id="uEmail" type="email" required /></label>
-            <label class="field">ПІБ<input id="uName" type="text" required /></label>
-            <label class="field">Пароль<input id="uPassword" type="text" minlength="6" required /></label>
-            <label class="field">Роль<select id="uRole"><option value="recruiter">recruiter</option><option value="admin">admin</option></select></label>
-            <button class="btn primary" type="submit">Створити</button>
-          </form>
+
+    <div class="app-container">
+      <aside class="sidebar" id="sidebar">
+        <div class="sidebar-nav">
+          <a href="/home" class="sidebar-link"><span>🏠</span> Головна</a>
+          <a href="/candidate" class="sidebar-link"><span>📝</span> Анкета</a>
+          <a href="/dashboard" class="sidebar-link"><span>📊</span> Кандидати</a>
+          <a href="/kpi" class="sidebar-link"><span>📈</span> КПІ</a>
+          <a href="/motivation" class="sidebar-link"><span>💰</span> Мотивація</a>
+          <a href="/users" class="sidebar-link"><span>👥</span> Користувачі</a>
         </div>
-        <div class="panel">
-          <table>
-            <thead><tr><th>ПІБ</th><th>Email</th><th>Роль</th><th>Статус</th><th>Дія</th></tr></thead>
-            <tbody id="usersBody"></tbody>
-          </table>
+      </aside>
+
+      <main class="main-content">
+        <header class="top-bar">
+          <button class="mobile-toggle">☰</button>
+          <div class="top-bar-center">
+            <h1 class="top-bar-title">SAT Recruitment Platform</h1>
+          </div>
+          <div class="top-bar-right">
+            <div class="nav-clock">
+              <div class="nav-clock-time" id="clock">00:00:00</div>
+              <div class="nav-clock-date" id="clock-date">Понеділок, 1 січня</div>
+            </div>
+            <button class="theme-toggle" data-theme-toggle type="button">Soft</button>
+            <button class="theme-toggle" id="logoutBtn" style="background:rgba(255,50,50,0.15);border-color:rgba(255,50,50,0.3);color:#ff8080;">Вихід</button>
+          </div>
+        </header>
+
+        <div class="page">
+          <div class="shell">
+            <section class="hero">
+              <div class="hero-content">
+                <div class="eyebrow">Admin panel</div>
+                <h1 class="title">Користувачі</h1>
+                <p class="subtitle" id="subline">Завантаження...</p>
+              </div>
+            </section>
+
+            <div class="panel">
+              <form id="createUserForm" class="formGrid">
+                <label class="field">Email<input id="uEmail" type="email" required /></label>
+                <label class="field">ПІБ<input id="uName" type="text" required /></label>
+                <label class="field">Пароль<input id="uPassword" type="text" minlength="6" required /></label>
+                <label class="field">Роль<select id="uRole"><option value="recruiter">recruiter</option><option value="admin">admin</option></select></label>
+                <button class="btn primary" type="submit">Створити</button>
+              </form>
+            </div>
+
+            <div class="panel">
+              <table>
+                <thead><tr><th>ПІБ</th><th>Email</th><th>Роль</th><th>Статус</th><th>Дія</th></tr></thead>
+                <tbody id="usersBody"></tbody>
+              </table>
+            </div>
+          </div>
         </div>
-      </div>
+      </main>
     </div>
+
     <script src="/ui.js"></script>
     <script>
       function token() { return localStorage.getItem('accessToken') || ''; }
@@ -75,51 +98,65 @@
         return res.json();
       }
       async function loadUsers() {
-        const me = await api('/auth/me');
-        document.getElementById('subline').textContent = `Ви: ${me.email} (${me.role})`;
-        if (me.role !== 'admin') {
-          document.getElementById('usersBody').innerHTML = '<tr><td colspan="5">Доступ лише для admin.</td></tr>';
-          return;
-        }
-        const users = await api('/auth/users');
-        document.getElementById('usersBody').innerHTML = users.map((u) => `
-          <tr>
-            <td>${u.fullName || '-'}</td>
-            <td>${u.email}</td>
-            <td><span class="tag">${u.role}</span></td>
-            <td><span class="${u.isActive ? 'ok' : 'off'}">${u.isActive ? 'active' : 'inactive'}</span></td>
-            <td><button class="btn" data-id="${u.id}" data-active="${u.isActive ? '1' : '0'}">${u.isActive ? 'Деактивувати' : 'Активувати'}</button></td>
-          </tr>
-        `).join('');
-        document.querySelectorAll('#usersBody button[data-id]').forEach((btn) => {
-          btn.addEventListener('click', async () => {
-            const id = btn.getAttribute('data-id');
-            const active = btn.getAttribute('data-active') === '1';
-            await api(`/auth/users/${id}/active`, { method: 'PATCH', body: JSON.stringify({ isActive: !active }) });
-            await loadUsers();
+        try {
+          const me = await api('/auth/me');
+          document.getElementById('subline').textContent = `Ви: ${me.email} (${me.role})`;
+          if (me.role !== 'admin') {
+            document.getElementById('usersBody').innerHTML = '<tr><td colspan="5">Доступ лише для admin.</td></tr>';
+            return;
+          }
+          const users = await api('/auth/users');
+          document.getElementById('usersBody').innerHTML = users.map((u) => `
+            <tr>
+              <td>${u.fullName || '-'}</td>
+              <td>${u.email}</td>
+              <td><span class="tag">${u.role}</span></td>
+              <td><span class="${u.isActive ? 'ok' : 'off'}">${u.isActive ? 'active' : 'inactive'}</span></td>
+              <td><button class="btn" data-id="${u.id}" data-active="${u.isActive ? '1' : '0'}">${u.isActive ? 'Деактивувати' : 'Активувати'}</button></td>
+            </tr>
+          `).join('');
+          document.querySelectorAll('#usersBody button[data-id]').forEach((btn) => {
+            btn.addEventListener('click', async () => {
+              const id = btn.getAttribute('data-id');
+              const active = btn.getAttribute('data-active') === '1';
+              await api(`/auth/users/${id}/active`, { method: 'PATCH', body: JSON.stringify({ isActive: !active }) });
+              await loadUsers();
+            });
           });
-        });
+        } catch (e) {
+          console.error(e);
+        }
       }
       document.getElementById('createUserForm').addEventListener('submit', async (e) => {
         e.preventDefault();
-        await api('/auth/users', {
-          method: 'POST',
-          body: JSON.stringify({
-            email: document.getElementById('uEmail').value,
-            fullName: document.getElementById('uName').value,
-            password: document.getElementById('uPassword').value,
-            role: document.getElementById('uRole').value,
-          }),
-        });
-        e.target.reset();
-        await loadUsers();
+        try {
+          await api('/auth/users', {
+            method: 'POST',
+            body: JSON.stringify({
+              email: document.getElementById('uEmail').value,
+              fullName: document.getElementById('uName').value,
+              password: document.getElementById('uPassword').value,
+              role: document.getElementById('uRole').value,
+            }),
+          });
+          e.target.reset();
+          await loadUsers();
+        } catch (err) {
+          alert('Помилка створення користувача');
+        }
       });
       window.UI?.initStarsAndParticles();
       window.UI?.initClock();
       window.UI?.setActiveNav('/users');
       window.UI?.initThemeToggle();
       window.UI?.hideUsersNavForRecruiter?.();
+      window.UI?.initSidebarToggle?.();
       loadUsers();
+
+      document.getElementById('logoutBtn')?.addEventListener('click', () => {
+        localStorage.removeItem('accessToken');
+        window.location.href = '/';
+      });
     </script>
   </body>
 </html>
