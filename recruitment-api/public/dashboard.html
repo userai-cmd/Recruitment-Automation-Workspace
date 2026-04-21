@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>SAT_Recrut - Кандидати</title>
-    <link rel="stylesheet" href="/ui.css?v=202604211523" />
+    <link rel="stylesheet" href="/ui.css?v=202604211800" />
     <style>
       .kpiRow{display:grid;grid-template-columns:repeat(4,minmax(160px,1fr));gap:14px;margin:0 0 16px}
       .kpi{border-radius:18px;padding:14px 16px;background:linear-gradient(180deg,rgba(8,20,38,0.82),rgba(5,14,28,0.92));
@@ -229,8 +229,81 @@
       </div>
     </div>
 
-    <script src="/ui.js?v=202604211523"></script>
-    <script src="/app.js?v=202604211523"></script>
+    <!-- CANDIDATE DRAWER -->
+    <div id="drawerOverlay" class="drawer-overlay"></div>
+    <aside id="drawer" class="drawer" aria-label="Деталі кандидата">
+      <div class="drawer-header">
+        <div>
+          <div id="drawerName" class="drawer-name">—</div>
+          <div id="drawerSub" class="drawer-sub">—</div>
+        </div>
+        <button id="drawerCloseBtn" class="drawer-close" type="button" aria-label="Закрити">✕</button>
+      </div>
+      <div class="drawer-body">
+        <div class="drawer-section">
+          <div class="drawer-section-title">Статус</div>
+          <div class="drawer-status-wrap">
+            <select id="drawerStatus" class="statusSelect" style="width:100%">
+              <option value="new">Новий</option>
+              <option value="contacted">Контакт</option>
+              <option value="interview">Співбесіда</option>
+              <option value="offer">Офер</option>
+              <option value="hired">Оформлений</option>
+              <option value="sb_failed">Не пройшов СБ</option>
+              <option value="rejected">Відхилений</option>
+            </select>
+          </div>
+        </div>
+        <div class="drawer-section">
+          <div class="drawer-section-title">Контакти</div>
+          <div class="drawer-field">
+            <span class="drawer-field-lbl">Телефон</span>
+            <span id="drawerPhone" class="drawer-field-val">—</span>
+          </div>
+          <div class="drawer-field">
+            <span class="drawer-field-lbl">Email</span>
+            <span id="drawerEmail" class="drawer-field-val">—</span>
+          </div>
+        </div>
+        <div class="drawer-section">
+          <div class="drawer-section-title">Деталі</div>
+          <div class="drawer-field">
+            <span class="drawer-field-lbl">Позиція</span>
+            <span id="drawerPosition" class="drawer-field-val">—</span>
+          </div>
+          <div class="drawer-field">
+            <span class="drawer-field-lbl">Місто</span>
+            <span id="drawerCity" class="drawer-field-val">—</span>
+          </div>
+          <div class="drawer-field">
+            <span class="drawer-field-lbl">Джерело</span>
+            <span id="drawerSource" class="drawer-field-val">—</span>
+          </div>
+          <div class="drawer-field">
+            <span class="drawer-field-lbl">Дата</span>
+            <span id="drawerDate" class="drawer-field-val">—</span>
+          </div>
+          <div class="drawer-field">
+            <span class="drawer-field-lbl">Коментар</span>
+            <span id="drawerComment" class="drawer-field-val">—</span>
+          </div>
+        </div>
+        <div class="drawer-section">
+          <div class="drawer-summary">
+            <div class="drawer-summary-title">✦ Auto-summary</div>
+            <div id="drawerSummaryText">—</div>
+          </div>
+        </div>
+      </div>
+      <div class="drawer-footer">
+        <button id="drawerEditBtn" class="drawer-btn" type="button">✎ Редагувати</button>
+        <button id="drawerTaskBtn" class="drawer-btn" type="button">⏰ Задача</button>
+        <button id="drawerArchiveBtn" class="drawer-btn danger" type="button">🗑 Архів</button>
+      </div>
+    </aside>
+
+    <script src="/ui.js?v=202604211800"></script>
+    <script src="/app.js?v=202604211800"></script>
     <script>
       window.UI?.initStarsAndParticles();
       window.UI?.initClock();

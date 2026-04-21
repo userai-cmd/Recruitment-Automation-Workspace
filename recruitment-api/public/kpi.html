@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>SAT_Recrut - KPI</title>
-    <link rel="stylesheet" href="/ui.css?v=202604211523" />
+    <link rel="stylesheet" href="/ui.css?v=202604211800" />
     <style>
       .summaryRow{display:grid;grid-template-columns:repeat(6,minmax(130px,1fr));gap:12px;margin:0 0 16px}
       .summaryCard{border-radius:16px;padding:12px 10px;text-align:center;border:1px solid rgba(116,198,255,.25);
@@ -55,8 +55,23 @@
 
       .loading,.error{padding:10px 2px 0}
       .error{color:#ff8080;white-space:pre-wrap}
+      .convPanel{border-radius:20px;padding:18px 20px;margin-top:14px;border:1px solid rgba(116,198,255,.22);
+        background:linear-gradient(180deg,rgba(8,20,38,.82),rgba(5,14,28,.92));
+        box-shadow:inset 0 1px 0 rgba(255,255,255,.03),0 18px 40px rgba(0,0,0,.28)}
+      .convPanel h3{margin:0;font-size:15px}
+      .convGrid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-top:14px;align-items:end}
+      .convStep{text-align:center;position:relative}
+      .convStep:not(:last-child)::after{content:"→";position:absolute;right:-12px;top:50%;transform:translateY(-50%);
+        font-size:18px;color:rgba(103,181,255,.4);font-weight:900}
+      .convBar{height:80px;display:flex;align-items:flex-end;justify-content:center;margin-bottom:6px}
+      .convFill{width:36px;border-radius:6px 6px 0 0;background:linear-gradient(0deg,#5cc4ff,#8ee8ff);
+        transition:height .4s ease;min-height:4px}
+      .convFill.highlight{background:linear-gradient(0deg,#5ee8a4,#9ef5c9)}
+      .convPct{font-size:20px;font-weight:900;color:#f4fbff;line-height:1}
+      .convLbl{font-size:11px;color:var(--muted);margin-top:4px;text-transform:uppercase;letter-spacing:.6px}
+      .convCount{font-size:12px;color:#7dd3fc;margin-top:2px}
       @media(max-width:1200px){.summaryRow{grid-template-columns:repeat(3,minmax(130px,1fr))}}
-      @media(max-width:920px){.grid{grid-template-columns:1fr}.summaryRow{grid-template-columns:repeat(2,minmax(130px,1fr))}.kpiFilters{flex-direction:column;align-items:flex-start}}
+      @media(max-width:920px){.grid{grid-template-columns:1fr}.summaryRow{grid-template-columns:repeat(2,minmax(130px,1fr))}.kpiFilters{flex-direction:column;align-items:flex-start}.convGrid{grid-template-columns:repeat(3,1fr)}}
     </style>
   </head>
   <body>
@@ -163,12 +178,18 @@
           </div>
         </div>
 
+        <div class="convPanel" id="conversionPanel" style="display:none">
+          <h3>Конверсія воронки</h3>
+          <div class="sub">Прохідність між етапами рекрутингу</div>
+          <div class="convGrid" id="conversionGrid"></div>
+        </div>
+
         <div id="loading" class="loading">Завантажую KPI...</div>
         <div id="error" class="error" style="display:none"></div>
       </div>
     </div>
 
-    <script src="/ui.js?v=202604211523"></script>
+    <script src="/ui.js?v=202604211800"></script>
     <script>
       (function () {
       function safeInitUi() {
@@ -342,6 +363,52 @@
         ).join('');
       }
 
+      function renderConversionFunnel(funnelData) {
+        const panel = document.getElementById('conversionPanel');
+        const grid = document.getElementById('conversionGrid');
+        if (!panel || !grid || !funnelData?.length) return;
+
+        // Map stage name → count from funnel array
+        const byStage = {};
+        for (const d of funnelData) byStage[d.stage] = d.value;
+
+        // Define key pipeline steps with Ukrainian labels
+        const steps = [
+          { key: 'Новий',       label: 'Новий',       short: 'new' },
+          { key: 'Контакт',     label: 'Контакт',     short: 'contact' },
+          { key: 'Співбесіда',  label: 'Співбесіда',  short: 'interview' },
+          { key: 'Офер',        label: 'Офер',        short: 'offer' },
+          { key: 'Оформлений',  label: 'Оформлений',  short: 'hired', highlight: true },
+        ];
+
+        const counts = steps.map((s) => byStage[s.key] ?? 0);
+        const base = Math.max(1, counts[0]);
+
+        grid.innerHTML = steps.map((s, i) => {
+          const count = counts[i];
+          const pct = Math.round((count / base) * 100);
+          const barH = Math.max(4, Math.round((count / base) * 72));
+          const conv = i > 0 && counts[i - 1] > 0
+            ? Math.round((count / counts[i - 1]) * 100)
+            : null;
+          const convHtml = conv !== null
+            ? `<div style="font-size:10px;color:${conv >= 50 ? '#6ef0a5' : '#ff9aa8'};margin-top:2px">${conv}% з поп.</div>`
+            : '';
+          return `
+            <div class="convStep">
+              <div class="convBar">
+                <div class="convFill${s.highlight ? ' highlight' : ''}" style="height:${barH}px"></div>
+              </div>
+              <div class="convPct">${pct}%</div>
+              <div class="convLbl">${s.label}</div>
+              <div class="convCount">${count} канд.</div>
+              ${convHtml}
+            </div>`;
+        }).join('');
+
+        panel.style.display = '';
+      }
+
       function renderBars(containerId, rows) {
         const root = document.getElementById(containerId);
         const max = Math.max(1, ...rows.map((r) => r.value));
@@ -390,6 +457,7 @@
           renderDonut(data.byStatus);
           renderBars('sourceBars', data.bySource);
           renderBars('positionBars', data.topPositions);
+          renderConversionFunnel(data.funnel);
 
           const loading = document.getElementById('loading');
           if (loading) loading.style.display = 'none';

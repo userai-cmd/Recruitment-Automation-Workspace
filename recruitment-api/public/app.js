@@ -14,6 +14,7 @@ const STATUS_LABELS = {
 let searchTerm = '';
 let dashboardCandidates = [];
 let dashboardUser = null;
+let drawerCandidate = null;
 let selectedStatus = 'all';
 let selectedPosition = 'all';
 let selectedRecruiterId = '';
@@ -345,6 +346,195 @@ function openFormModal(title, fields, submitLabel = 'Зберегти') {
   });
 }
 
+/* ── CANDIDATE DRAWER ─────────────────────────────────────────── */
+function generateTemplateSummary(cand) {
+  const statusMap = {
+    new: 'новий кандидат', contacted: 'в стадії контакту', interview: 'на співбесіді',
+    offer: 'в стадії офера', hired: 'оформлений', sb_failed: 'не пройшов СБ', rejected: 'відхилений',
+  };
+  const parts = [];
+  parts.push(`Кандидат "${cand.fullName || '—'}" — ${statusMap[cand.status] || cand.status}`);
+  if (cand.position) parts.push(`на позицію "${cand.position}"`);
+  if (cand.city) parts.push(`(${cand.city})`);
+  parts[0] = parts.join(' ') + '.';
+  const extra = [];
+  if (cand.source) extra.push(`Джерело: ${cand.source}.`);
+  if (cand.comment) extra.push(`Коментар: "${cand.comment}".`);
+  extra.push(`Доданий ${formatDate(cand.createdAt)}.`);
+  return [parts[0], ...extra].join(' ');
+}
+
+function openDrawer(cand) {
+  drawerCandidate = cand;
+  const setText = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val || '—'; };
+  setText('drawerName', cand.fullName);
+  setText('drawerSub', [cand.position, cand.city].filter(Boolean).join(' · ') || 'Деталі кандидата');
+  setText('drawerPhone', cand.phone);
+  setText('drawerEmail', cand.email);
+  setText('drawerPosition', cand.position);
+  setText('drawerCity', cand.city);
+  setText('drawerDate', formatDate(cand.createdAt));
+  setText('drawerComment', cand.comment);
+  setText('drawerSummaryText', generateTemplateSummary(cand));
+
+  const srcEl = document.getElementById('drawerSource');
+  if (srcEl) {
+    if (cand.source === 'Telegram') {
+      srcEl.innerHTML = '<span class="drawer-tg-badge">✈ Telegram</span>';
+    } else {
+      srcEl.textContent = cand.source || '—';
+    }
+  }
+
+  const statusSel = document.getElementById('drawerStatus');
+  if (statusSel) {
+    statusSel.value = cand.status || 'new';
+    statusSel.className = `statusSelect status-${cand.status}`;
+  }
+
+  document.getElementById('drawerOverlay')?.classList.add('open');
+  document.getElementById('drawer')?.classList.add('open');
+}
+
+function closeDrawer() {
+  document.getElementById('drawerOverlay')?.classList.remove('open');
+  document.getElementById('drawer')?.classList.remove('open');
+  drawerCandidate = null;
+}
+
+function bindDrawer() {
+  document.getElementById('drawerOverlay')?.addEventListener('click', closeDrawer);
+  document.getElementById('drawerCloseBtn')?.addEventListener('click', closeDrawer);
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && drawerCandidate) closeDrawer();
+  });
+
+  // Status change inside drawer
+  const drawerStatus = document.getElementById('drawerStatus');
+  if (drawerStatus) {
+    drawerStatus.addEventListener('change', async () => {
+      const cand = drawerCandidate;
+      if (!cand) return;
+      const next = drawerStatus.value;
+      const prev = cand.status;
+      if (next === prev) return;
+
+      drawerStatus.className = `statusSelect status-${next}`;
+      cand.status = next;
+      const inList = dashboardCandidates.find((c) => c.id === cand.id);
+      if (inList) inList.status = next;
+
+      try {
+        await api(`/candidates/${cand.id}/status`, {
+          method: 'PATCH',
+          body: JSON.stringify({ toStatus: next, reason: 'Updated from drawer' }),
+        });
+      } catch (e) {
+        drawerStatus.value = prev;
+        drawerStatus.className = `statusSelect status-${prev}`;
+        cand.status = prev;
+        if (inList) inList.status = prev;
+        showActionError(e, 'Не вдалося змінити статус');
+        return;
+      }
+
+      showUndoSnackbar(
+        `${cand.fullName}: ${STATUS_LABELS[prev]} → ${STATUS_LABELS[next]}`,
+        async () => {
+          try {
+            await api(`/candidates/${cand.id}/status`, {
+              method: 'PATCH',
+              body: JSON.stringify({ toStatus: prev, reason: 'Reverted via undo' }),
+            });
+            cand.status = prev;
+            if (inList) inList.status = prev;
+            if (drawerCandidate?.id === cand.id) {
+              drawerStatus.value = prev;
+              drawerStatus.className = `statusSelect status-${prev}`;
+            }
+            refreshCandidatesView();
+          } catch (err) { showActionError(err, 'Не вдалося скасувати'); }
+        },
+      );
+      refreshCandidatesView();
+    });
+  }
+
+  // Edit button
+  document.getElementById('drawerEditBtn')?.addEventListener('click', async () => {
+    const cand = drawerCandidate;
+    if (!cand) return;
+    const values = await openFormModal('Редагування кандидата', [
+      { name: 'fullName', label: 'ПІБ',      value: cand.fullName || '', required: true },
+      { name: 'phone',    label: 'Телефон',   value: cand.phone    || '', required: true },
+      { name: 'email',    label: 'Email',     value: cand.email    || '', type: 'email' },
+      { name: 'city',     label: 'Місто',     value: cand.city     || '' },
+      { name: 'position', label: 'Позиція',   value: cand.position || '' },
+      { name: 'source',   label: 'Джерело',   value: cand.source   || '' },
+      { name: 'comment',  label: 'Коментар',  value: cand.comment  || '', multiline: true },
+    ], 'Зберегти');
+    if (!values) return;
+    try {
+      await api(`/candidates/${cand.id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          fullName: values.fullName || undefined, phone: values.phone || undefined,
+          email: values.email || undefined,       city: values.city || undefined,
+          position: values.position || undefined, source: values.source || undefined,
+          comment: values.comment || undefined,
+        }),
+      });
+      closeDrawer();
+      await loadCandidatesTable();
+    } catch (e) { showActionError(e, 'Не вдалося зберегти'); }
+  });
+
+  // Task button
+  document.getElementById('drawerTaskBtn')?.addEventListener('click', async () => {
+    const cand = drawerCandidate;
+    if (!cand) return;
+    try {
+      const base = new Date();
+      base.setDate(base.getDate() + 1);
+      base.setHours(10, 0, 0, 0);
+      const values = await openFormModal('Нова задача', [
+        { name: 'title',    label: 'Назва задачі',           value: `Зв'язатися: ${cand.fullName}`, required: true },
+        { name: 'dueAt',    label: 'Дедлайн (YYYY-MM-DDTHH:mm)', value: toLocalDatetimeInputValue(base), required: true },
+        { name: 'priority', label: 'Пріоритет (low/medium/high)', value: 'medium', required: true },
+      ], 'Створити задачу');
+      if (!values) return;
+      await api('/tasks', {
+        method: 'POST',
+        body: JSON.stringify({
+          title: values.title || 'Нова задача',
+          dueAt: new Date(values.dueAt).toISOString(),
+          candidateId: cand.id,
+          priority: ['low', 'medium', 'high'].includes(values.priority) ? values.priority : 'medium',
+        }),
+      });
+      alert('Задачу створено ✓');
+    } catch (e) { showActionError(e, 'Не вдалося створити задачу'); }
+  });
+
+  // Archive button
+  document.getElementById('drawerArchiveBtn')?.addEventListener('click', async () => {
+    const cand = drawerCandidate;
+    if (!cand) return;
+    const yes = await showConfirmModal({
+      icon: '🗑', title: 'Архівувати кандидата?',
+      body: `<strong>${cand.fullName}</strong>${cand.phone ? ` · ${cand.phone}` : ''}<br>Кандидат буде переміщений до архіву.`,
+      confirmLabel: 'Архівувати', danger: true,
+    });
+    if (!yes) return;
+    try {
+      await api(`/candidates/${cand.id}`, { method: 'DELETE' });
+      closeDrawer();
+      await loadCandidatesTable();
+    } catch (e) { showActionError(e, 'Не вдалося архівувати'); }
+  });
+}
+
 function extractApiError(error, fallback) {
   const message = String(error?.message || fallback || '');
   const match = message.match(/:\s*(\{.*\})$/);
@@ -439,7 +629,9 @@ function renderCandidatesTable(candidates) {
     const tr = document.createElement('tr');
 
     const nameTd = document.createElement('td');
+    nameTd.className = 'name-clickable';
     nameTd.innerHTML = `<div class="mainText">${cand.fullName || '-'}</div><div class="subText">${cand.email || '-'}</div>`;
+    nameTd.addEventListener('click', () => openDrawer(cand));
 
     const phoneTd = document.createElement('td');
     phoneTd.textContent = cand.phone || '-';
@@ -451,7 +643,11 @@ function renderCandidatesTable(candidates) {
     cityTd.textContent = cand.city || '-';
 
     const sourceTd = document.createElement('td');
-    sourceTd.textContent = cand.source || '-';
+    if (cand.source === 'Telegram') {
+      sourceTd.innerHTML = '<span style="display:inline-flex;align-items:center;gap:4px;padding:2px 7px;border-radius:999px;background:rgba(40,150,255,.1);border:1px solid rgba(40,150,255,.25);font-size:11px;font-weight:800;color:#7dd3fc">✈ Telegram</span>';
+    } else {
+      sourceTd.textContent = cand.source || '-';
+    }
 
     const dateTd = document.createElement('td');
     dateTd.textContent = formatDate(cand.createdAt);
@@ -716,6 +912,10 @@ function createKanbanCard(cand) {
       <button class="rowAction kanban-edit-btn" type="button" title="Редагувати" style="width:26px;height:26px;font-size:13px">✎</button>
     </div>`;
 
+  card.addEventListener('click', (e) => {
+    if (e.target.closest('.kanban-edit-btn')) return;
+    openDrawer(cand);
+  });
   card.addEventListener('dragstart', (e) => {
     card.classList.add('dragging');
     e.dataTransfer.setData('candidateId', cand.id);
@@ -1186,6 +1386,7 @@ async function init() {
   bindSearch();
   bindDashboardFilters();
   bindViewToggle();
+  bindDrawer();
   bindCandidatePage();
 
   if (loginForm) {

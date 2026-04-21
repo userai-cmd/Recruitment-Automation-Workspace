@@ -532,3 +532,66 @@ body::after{background:
   opacity:0;pointer-events:none;transition:opacity .2s ease}
 .dirty-warn-badge.show{opacity:1}
 
+/* ── CANDIDATE DRAWER ─────────────────────────────────────────── */
+.drawer-overlay{position:fixed;inset:0;background:rgba(2,8,18,.52);z-index:400;
+  opacity:0;pointer-events:none;transition:opacity .22s ease;backdrop-filter:blur(2px)}
+.drawer-overlay.open{opacity:1;pointer-events:auto}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:440px;max-width:96vw;
+  background:linear-gradient(180deg,rgba(7,18,36,.99),rgba(4,12,24,1));
+  border-left:1px solid rgba(116,198,255,.22);
+  box-shadow:-20px 0 70px rgba(0,0,0,.55);
+  z-index:401;overflow-y:auto;transform:translateX(110%);
+  transition:transform .27s cubic-bezier(.22,.68,0,1.15);
+  display:flex;flex-direction:column}
+.drawer.open{transform:translateX(0)}
+.drawer-header{padding:18px 20px 14px;border-bottom:1px solid rgba(116,198,255,.1);
+  display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-shrink:0}
+.drawer-name{font-size:18px;font-weight:900;color:#f4fbff;line-height:1.2}
+.drawer-sub{font-size:13px;color:var(--muted);margin-top:4px}
+.drawer-close{padding:6px 9px;border-radius:8px;border:1px solid rgba(103,181,255,.2);
+  background:rgba(5,14,26,.5);color:#d9eeff;cursor:pointer;font-size:17px;line-height:1;flex-shrink:0;
+  transition:.15s ease}
+.drawer-close:hover{background:rgba(12,40,90,.7);border-color:rgba(103,181,255,.5);color:#fff}
+.drawer-body{padding:16px 20px;flex:1}
+.drawer-section{margin-bottom:18px}
+.drawer-section-title{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;
+  color:var(--muted);margin-bottom:10px}
+.drawer-field{display:flex;align-items:flex-start;gap:12px;padding:8px 0;
+  border-bottom:1px solid rgba(116,198,255,.07)}
+.drawer-field:last-child{border-bottom:none}
+.drawer-field-lbl{font-size:10px;color:var(--muted);width:76px;flex-shrink:0;text-transform:uppercase;
+  letter-spacing:.5px;padding-top:1px}
+.drawer-field-val{font-size:13px;color:#d9eeff;flex:1;word-break:break-word;line-height:1.5}
+.drawer-tg-badge{display:inline-flex;align-items:center;gap:5px;padding:2px 8px;
+  border-radius:999px;background:rgba(40,150,255,.12);border:1px solid rgba(40,150,255,.3);
+  font-size:11px;font-weight:800;color:#7dd3fc}
+.drawer-footer{padding:14px 20px;border-top:1px solid rgba(116,198,255,.12);
+  display:flex;gap:8px;flex-shrink:0}
+.drawer-btn{flex:1;padding:10px 8px;border-radius:12px;border:1px solid rgba(103,181,255,.18);
+  background:rgba(5,14,26,.54);color:#d9eeff;font-size:12px;font-weight:800;cursor:pointer;
+  transition:.15s ease;text-align:center;line-height:1.2}
+.drawer-btn:hover{border-color:rgba(103,181,255,.45);color:#fff;background:rgba(12,40,90,.6)}
+.drawer-btn.primary{background:linear-gradient(180deg,rgba(40,167,255,.98),rgba(20,102,214,.96));
+  border-color:transparent;color:#fff}
+.drawer-btn.primary:hover{box-shadow:0 6px 18px rgba(30,99,230,.3)}
+.drawer-btn.danger{color:#ff9090;border-color:rgba(255,80,80,.2)}
+.drawer-btn.danger:hover{background:rgba(255,80,80,.1);border-color:rgba(255,80,80,.4)}
+.drawer-status-wrap{margin:6px 0 2px}
+.drawer-status-wrap .statusSelect{width:100%;padding:10px 12px;font-size:13px;border-radius:12px}
+.drawer-summary{margin-top:8px;padding:12px 14px;border-radius:12px;
+  background:rgba(40,167,255,.05);border:1px solid rgba(40,167,255,.16);
+  font-size:13px;color:#c6d8ee;line-height:1.65}
+.drawer-summary-title{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;
+  color:#7dd3fc;margin-bottom:7px}
+.name-clickable{cursor:pointer}
+.name-clickable:hover .mainText{text-decoration:underline;color:#7dd3fc}
+:root[data-theme='soft'] .drawer{background:rgba(245,250,255,.99);border-color:rgba(132,173,225,.35)}
+:root[data-theme='soft'] .drawer-header{border-color:rgba(132,173,225,.2)}
+:root[data-theme='soft'] .drawer-name{color:#0d213d}
+:root[data-theme='soft'] .drawer-field{border-color:rgba(132,173,225,.12)}
+:root[data-theme='soft'] .drawer-field-val{color:#1c3d6a}
+:root[data-theme='soft'] .drawer-footer{border-color:rgba(132,173,225,.2)}
+:root[data-theme='soft'] .drawer-btn{background:rgba(240,247,255,.9);border-color:rgba(132,173,225,.4);color:#1c3d6a}
+:root[data-theme='soft'] .drawer-summary{background:rgba(47,133,232,.06);border-color:rgba(47,133,232,.2)}
+:root[data-theme='soft'] .drawer-summary-title{color:#2f85e8}
+
