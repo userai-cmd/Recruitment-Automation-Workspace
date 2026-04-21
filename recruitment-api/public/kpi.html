@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>SAT_Recrut - KPI</title>
-    <link rel="stylesheet" href="/ui.css?v=202604211800" />
+    <link rel="stylesheet" href="/ui.css?v=202604211830" />
     <style>
       .summaryRow{display:grid;grid-template-columns:repeat(6,minmax(130px,1fr));gap:12px;margin:0 0 16px}
       .summaryCard{border-radius:16px;padding:12px 10px;text-align:center;border:1px solid rgba(116,198,255,.25);
@@ -189,7 +189,7 @@
       </div>
     </div>
 
-    <script src="/ui.js?v=202604211800"></script>
+    <script src="/ui.js?v=202604211830"></script>
     <script>
       (function () {
       function safeInitUi() {
@@ -429,7 +429,6 @@
             const meRes = await fetch('/auth/me', { headers });
             if (meRes.ok) {
               me = await meRes.json();
-              document.getElementById('subline').textContent = `Ви: ${me.email} (${me.role})`;
             }
           } catch (_) {
             // continue in fallback mode

@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>SAT_Recrut - Мотивація</title>
-    <link rel="stylesheet" href="/ui.css?v=202604211800" />
+    <link rel="stylesheet" href="/ui.css?v=202604211830" />
     <style>
       .toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 14px;flex-wrap:wrap}
       .periodBtns{display:flex;gap:8px;flex-wrap:wrap}
@@ -147,7 +147,7 @@
       </div>
     </div>
 
-    <script src="/ui.js?v=202604211800"></script>
+    <script src="/ui.js?v=202604211830"></script>
     <script>
       window.UI?.initStarsAndParticles();
       window.UI?.initClock();
@@ -267,7 +267,6 @@
           const meRes = await fetch('/auth/me', { headers });
           if (!meRes.ok) throw new Error('auth failed');
           const me = await meRes.json();
-          document.getElementById('subline').textContent = `Ви: ${me.email} (${me.role})`;
           const recruiterFilter = document.getElementById('recruiterFilter');
           if (me.role === 'admin' && recruiterFilter) {
             const usersRes = await fetch('/auth/users', { headers });
