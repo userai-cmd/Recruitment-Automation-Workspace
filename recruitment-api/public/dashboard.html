@@ -188,30 +188,40 @@
 
         <div class="tableActionRow">
           <div class="listMeta" style="margin:0">Всього: <strong id="listTotal">0</strong></div>
-          <a class="btn" href="/candidate">+ Новий кандидат</a>
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="view-toggle">
+              <button id="viewTableBtn" class="view-btn active" type="button">≡ Таблиця</button>
+              <button id="viewKanbanBtn" class="view-btn" type="button">⊞ Канбан</button>
+            </div>
+            <a class="btn" href="/candidate">+ Новий кандидат</a>
+          </div>
         </div>
 
-        <div class="tableWrap">
-          <table class="candTable">
-            <thead>
-              <tr>
-                <th>ПІБ</th>
-                <th>Телефон</th>
-                <th>Позиція</th>
-                <th>Місто</th>
-                <th>Джерело</th>
-                <th>Дата</th>
-                <th>Статус</th>
-                <th>Дії</th>
-              </tr>
-            </thead>
-            <tbody id="candidatesBody"></tbody>
-          </table>
-        </div>
-        <div class="pagination">
-          <button class="pageBtn" id="prevPageBtn" type="button">← Назад</button>
-          <div class="pageInfo" id="pageInfo">Сторінка 1 / 1</div>
-          <button class="pageBtn" id="nextPageBtn" type="button">Вперед →</button>
+        <div id="kanbanBoard" class="kanban-board" style="display:none"></div>
+
+        <div id="tableViewWrap">
+          <div class="tableWrap">
+            <table class="candTable">
+              <thead>
+                <tr>
+                  <th>ПІБ</th>
+                  <th>Телефон</th>
+                  <th>Позиція</th>
+                  <th>Місто</th>
+                  <th>Джерело</th>
+                  <th>Дата</th>
+                  <th>Статус</th>
+                  <th>Дії</th>
+                </tr>
+              </thead>
+              <tbody id="candidatesBody"></tbody>
+            </table>
+          </div>
+          <div class="pagination" id="paginationWrap">
+            <button class="pageBtn" id="prevPageBtn" type="button">← Назад</button>
+            <div class="pageInfo" id="pageInfo">Сторінка 1 / 1</div>
+            <button class="pageBtn" id="nextPageBtn" type="button">Вперед →</button>
+          </div>
         </div>
 
         <div id="loading" class="loading">Завантажую кандидатів...</div>

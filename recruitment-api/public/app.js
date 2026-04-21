@@ -682,13 +682,199 @@ function exportCsv() {
   document.body.removeChild(link);
 }
 
+/* ── KANBAN VIEW ─────────────────────────────────────────────── */
+
+let currentView = localStorage.getItem('dashView') || 'table';
+
+const STATUS_COLORS = {
+  new:       { text: '#bfe1ff', border: 'rgba(99,179,255,.55)' },
+  contacted: { text: '#a9f3e8', border: 'rgba(80,220,200,.55)' },
+  interview: { text: '#dac7ff', border: 'rgba(170,130,255,.55)' },
+  offer:     { text: '#ffe0a6', border: 'rgba(255,198,90,.55)' },
+  hired:     { text: '#bdf5c8', border: 'rgba(95,228,128,.55)' },
+  sb_failed: { text: '#ffd0bd', border: 'rgba(255,126,95,.55)' },
+  rejected:  { text: '#ffcad4', border: 'rgba(255,120,140,.55)' },
+};
+
+function createKanbanCard(cand) {
+  const card = document.createElement('div');
+  card.className = 'kanban-card';
+  card.draggable = true;
+  card.dataset.id = cand.id;
+
+  const lines = [
+    cand.position ? `<div class="kanban-card-meta">${cand.position}</div>` : '',
+    cand.city     ? `<div class="kanban-card-meta">${cand.city}</div>` : '',
+  ].join('');
+
+  card.innerHTML = `
+    <div class="kanban-card-name">${cand.fullName || '—'}</div>
+    <div class="kanban-card-phone">${cand.phone || '—'}</div>
+    ${lines}
+    <div class="kanban-card-footer">
+      <span class="kanban-card-date">${formatDate(cand.createdAt)}</span>
+      <button class="rowAction kanban-edit-btn" type="button" title="Редагувати" style="width:26px;height:26px;font-size:13px">✎</button>
+    </div>`;
+
+  card.addEventListener('dragstart', (e) => {
+    card.classList.add('dragging');
+    e.dataTransfer.setData('candidateId', cand.id);
+    e.dataTransfer.setData('prevStatus', cand.status);
+    e.dataTransfer.effectAllowed = 'move';
+  });
+  card.addEventListener('dragend', () => card.classList.remove('dragging'));
+
+  card.querySelector('.kanban-edit-btn').addEventListener('click', async (e) => {
+    e.stopPropagation();
+    const values = await openFormModal('Редагування кандидата', [
+      { name: 'fullName', label: 'ПІБ',      value: cand.fullName || '', required: true },
+      { name: 'phone',    label: 'Телефон',   value: cand.phone    || '', required: true },
+      { name: 'email',    label: 'Email',     value: cand.email    || '', type: 'email' },
+      { name: 'city',     label: 'Місто',     value: cand.city     || '' },
+      { name: 'position', label: 'Позиція',   value: cand.position || '' },
+      { name: 'source',   label: 'Джерело',   value: cand.source   || '' },
+      { name: 'comment',  label: 'Коментар',  value: cand.comment  || '', multiline: true },
+    ], 'Зберегти');
+    if (!values) return;
+    try {
+      await api(`/candidates/${cand.id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          fullName: values.fullName || undefined, phone: values.phone || undefined,
+          email: values.email || undefined,       city: values.city || undefined,
+          position: values.position || undefined, source: values.source || undefined,
+          comment: values.comment || undefined,
+        }),
+      });
+      await loadCandidatesTable();
+    } catch (err) { showActionError(err, 'Не вдалося зберегти зміни'); }
+  });
+
+  return card;
+}
+
+function renderKanbanBoard(candidates) {
+  const board = document.getElementById('kanbanBoard');
+  if (!board) return;
+  board.innerHTML = '';
+
+  for (const status of STATUSES) {
+    const colCands = candidates.filter((c) => c.status === status);
+    const col = document.createElement('div');
+    col.className = 'kanban-col';
+    col.dataset.status = status;
+
+    const clr = STATUS_COLORS[status] || {};
+    const header = document.createElement('div');
+    header.className = 'kanban-col-header';
+    header.innerHTML = `
+      <span class="kanban-col-title" style="color:${clr.text || '#d9eeff'};border-left:3px solid ${clr.border || 'rgba(103,181,255,.4)'};padding-left:8px">
+        ${STATUS_LABELS[status] || status}
+      </span>
+      <span class="kanban-col-count">${colCands.length}</span>`;
+    col.appendChild(header);
+
+    const list = document.createElement('div');
+    list.className = 'kanban-list';
+    if (colCands.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'kanban-empty';
+      empty.textContent = 'Порожньо';
+      list.appendChild(empty);
+    } else {
+      colCands.forEach((c) => list.appendChild(createKanbanCard(c)));
+    }
+    col.appendChild(list);
+
+    col.addEventListener('dragover', (e) => { e.preventDefault(); col.classList.add('drag-over'); });
+    col.addEventListener('dragleave', (e) => { if (!col.contains(e.relatedTarget)) col.classList.remove('drag-over'); });
+    col.addEventListener('drop', async (e) => {
+      e.preventDefault();
+      col.classList.remove('drag-over');
+      const candId    = e.dataTransfer.getData('candidateId');
+      const prevStatus = e.dataTransfer.getData('prevStatus');
+      const nextStatus = col.dataset.status;
+      if (!candId || prevStatus === nextStatus) return;
+      await handleKanbanDrop(candId, prevStatus, nextStatus);
+    });
+
+    board.appendChild(col);
+  }
+}
+
+async function handleKanbanDrop(candId, prevStatus, nextStatus) {
+  const cand = dashboardCandidates.find((c) => c.id === candId);
+  if (!cand) return;
+
+  cand.status = nextStatus;
+  refreshCandidatesView();
+
+  try {
+    await api(`/candidates/${candId}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ toStatus: nextStatus, reason: 'Kanban drag & drop' }),
+    });
+  } catch (e) {
+    cand.status = prevStatus;
+    refreshCandidatesView();
+    showActionError(e, 'Не вдалося змінити статус');
+    return;
+  }
+
+  showUndoSnackbar(
+    `${cand.fullName}: ${STATUS_LABELS[prevStatus] || prevStatus} → ${STATUS_LABELS[nextStatus] || nextStatus}`,
+    async () => {
+      try {
+        await api(`/candidates/${candId}/status`, {
+          method: 'PATCH',
+          body: JSON.stringify({ toStatus: prevStatus, reason: 'Reverted via undo' }),
+        });
+        cand.status = prevStatus;
+        refreshCandidatesView();
+      } catch (err) { showActionError(err, 'Не вдалося скасувати'); }
+    },
+  );
+}
+
+function bindViewToggle() {
+  const tableBtn  = document.getElementById('viewTableBtn');
+  const kanbanBtn = document.getElementById('viewKanbanBtn');
+  if (!tableBtn || !kanbanBtn) return;
+
+  const setView = (view) => {
+    currentView = view;
+    localStorage.setItem('dashView', view);
+    tableBtn.classList.toggle('active', view === 'table');
+    kanbanBtn.classList.toggle('active', view === 'kanban');
+    refreshCandidatesView();
+  };
+
+  if (currentView === 'kanban') setView('kanban');
+
+  tableBtn.addEventListener('click',  () => setView('table'));
+  kanbanBtn.addEventListener('click', () => setView('kanban'));
+}
+
 function refreshCandidatesView() {
-  const sorted = getFilteredSortedCandidates();
-  updatePagination(sorted.length);
-  const start = (currentPage - 1) * PAGE_SIZE;
-  const page = sorted.slice(start, start + PAGE_SIZE);
-  renderCandidatesTable(page);
+  const sorted   = getFilteredSortedCandidates();
+  const totalEl  = document.getElementById('listTotal');
+  if (totalEl) totalEl.textContent = String(sorted.length);
   updateKpis(dashboardCandidates);
+
+  const tableViewWrap = document.getElementById('tableViewWrap');
+  const kanbanBoard   = document.getElementById('kanbanBoard');
+
+  if (currentView === 'kanban') {
+    if (kanbanBoard)   kanbanBoard.style.display   = 'flex';
+    if (tableViewWrap) tableViewWrap.style.display = 'none';
+    renderKanbanBoard(sorted);
+  } else {
+    if (kanbanBoard)   kanbanBoard.style.display   = 'none';
+    if (tableViewWrap) tableViewWrap.style.display = '';
+    updatePagination(sorted.length);
+    const start = (currentPage - 1) * PAGE_SIZE;
+    renderCandidatesTable(sorted.slice(start, start + PAGE_SIZE));
+  }
 }
 
 async function loadCandidatesTable() {
@@ -999,6 +1185,7 @@ async function init() {
   bindLogout();
   bindSearch();
   bindDashboardFilters();
+  bindViewToggle();
   bindCandidatePage();
 
   if (loginForm) {
