@@ -59,22 +59,22 @@ body::after{background:
 .brand-text{display:flex;flex-direction:column;line-height:1.05}
 .brand-title{display:none}
 .top-nav .brand{
-  position:absolute;
-  left:50%;
-  transform:translateX(-50%);
-  z-index:1;
+  grid-column:2;
+  justify-self:center;
 }
 .brand-subtitle{
   font-size:22px;
   font-weight:900;
-  color:#ffd44d;
+  color:#8db6dd;
   text-transform:uppercase;
   letter-spacing:1.6px;
   margin-top:0;
   text-shadow:
-    0 0 8px rgba(255, 209, 59, 0.75),
-    0 0 20px rgba(255, 176, 0, 0.55),
-    0 0 34px rgba(255, 140, 0, 0.35);
+    -1px 0 rgba(255, 209, 59, 0.75),
+    1px 0 rgba(255, 209, 59, 0.75),
+    0 -1px rgba(255, 209, 59, 0.75),
+    0 1px rgba(255, 209, 59, 0.75),
+    0 0 12px rgba(255, 176, 0, 0.35);
 }
 .nav-links{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;min-width:0}
 .nav-links a{text-decoration:none;color:#d9eeff;font-size:13px;font-weight:700;padding:11px 16px;border-radius:12px;border:1px solid rgba(103,181,255,0.14);background:rgba(5,14,26,0.54);transition:.25s ease}
@@ -220,10 +220,12 @@ body::after{background:
   text-shadow:none !important;
 }
 :root[data-theme='soft'] .brand-subtitle{
-  color:#d28a00 !important;
+  color:#0d213d !important;
   text-shadow:
-    0 0 6px rgba(255, 201, 71, 0.45),
-    0 0 14px rgba(255, 201, 71, 0.25) !important;
+    -1px 0 rgba(255, 201, 71, 0.45),
+    1px 0 rgba(255, 201, 71, 0.45),
+    0 -1px rgba(255, 201, 71, 0.45),
+    0 1px rgba(255, 201, 71, 0.45) !important;
 }
 :root[data-theme='soft'] .formTitle,
 :root[data-theme='soft'] .formTag,
