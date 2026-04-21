@@ -617,7 +617,8 @@ async function loadCandidatesTable() {
 
 function bindLogout() {
   const btn = document.getElementById('logoutBtn');
-  if (!btn) return;
+  if (!btn || btn.dataset.logoutBound) return;
+  btn.dataset.logoutBound = '1';
   btn.addEventListener('click', () => {
     localStorage.removeItem('accessToken');
     window.location.href = '/';

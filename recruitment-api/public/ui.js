@@ -94,11 +94,61 @@ async function hideUsersNavForRecruiter() {
   }
 }
 
-window.UI = { initStarsAndParticles, initClock, setActiveNav, initThemeToggle, hideUsersNavForRecruiter };
+async function initProfileDropdown() {
+  const btn = document.getElementById('profileBtn');
+  const dropdown = document.getElementById('profileDropdown');
+  if (!btn || !dropdown) return;
+
+  const avatar = document.getElementById('profileAvatar');
+  const btnName = document.getElementById('profileBtnName');
+  const ddName = document.getElementById('profileDdName');
+  const ddRole = document.getElementById('profileDdRole');
+  const logoutBtn = document.getElementById('logoutBtn');
+
+  const token = localStorage.getItem('accessToken') || '';
+  if (token) {
+    try {
+      const res = await fetch('/auth/me', { headers: { Authorization: `Bearer ${token}` } });
+      if (res.ok) {
+        const me = await res.json();
+        const initials = (me.fullName || me.email || '?').charAt(0).toUpperCase();
+        if (avatar) avatar.textContent = initials;
+        const firstName = (me.fullName || me.email || 'Профіль').split(' ')[0];
+        if (btnName) btnName.textContent = firstName;
+        if (ddName) ddName.textContent = me.fullName || me.email || '—';
+        if (ddRole) ddRole.textContent = me.role === 'admin' ? 'Адміністратор' : 'Рекрутер';
+      }
+    } catch (_) {}
+  }
+
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const isOpen = dropdown.classList.toggle('open');
+    btn.classList.toggle('open', isOpen);
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!btn.closest('.profile-menu').contains(e.target)) {
+      dropdown.classList.remove('open');
+      btn.classList.remove('open');
+    }
+  });
+
+  if (logoutBtn && !logoutBtn.dataset.logoutBound) {
+    logoutBtn.dataset.logoutBound = '1';
+    logoutBtn.addEventListener('click', () => {
+      localStorage.removeItem('accessToken');
+      window.location.href = '/';
+    });
+  }
+}
+
+window.UI = { initStarsAndParticles, initClock, setActiveNav, initThemeToggle, hideUsersNavForRecruiter, initProfileDropdown };
 
 document.addEventListener('DOMContentLoaded', () => {
   initThemeToggle();
   initClock();
   hideUsersNavForRecruiter();
+  initProfileDropdown();
 });
 
