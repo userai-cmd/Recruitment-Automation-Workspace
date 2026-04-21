@@ -42,29 +42,40 @@ function initClock() {
 }
 
 function setActiveNav(href) {
-  document.querySelectorAll('.sidebar-link').forEach((a) => {
+  document.querySelectorAll('.nav-links a').forEach((a) => {
     a.classList.toggle('active', a.getAttribute('href') === href);
   });
 }
 
-function initSidebarToggle() {
-  const toggle = document.querySelector('.mobile-toggle');
-  const sidebar = document.getElementById('sidebar');
-  if (!toggle || !sidebar) return;
+function getSavedTheme() {
+  return localStorage.getItem('uiTheme') || 'dark';
+}
 
-  toggle.addEventListener('click', () => {
-    sidebar.classList.toggle('open');
+function applyTheme(theme) {
+  const next = theme === 'soft' ? 'soft' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('uiTheme', next);
+  document.querySelectorAll('[data-theme-toggle]').forEach((btn) => {
+    btn.textContent = next === 'soft' ? 'Dark' : 'Soft';
+    btn.setAttribute('aria-label', next === 'soft' ? 'Switch to dark theme' : 'Switch to soft theme');
+    btn.title = next === 'soft' ? 'Перемкнути на Dark' : 'Перемкнути на Soft';
   });
+}
 
-  document.addEventListener('click', (e) => {
-    if (window.innerWidth <= 980 && !sidebar.contains(e.target) && !toggle.contains(e.target) && sidebar.classList.contains('open')) {
-      sidebar.classList.remove('open');
-    }
+function initThemeToggle() {
+  applyTheme(getSavedTheme());
+  document.querySelectorAll('[data-theme-toggle]').forEach((btn) => {
+    if (btn.dataset.boundThemeToggle === '1') return;
+    btn.dataset.boundThemeToggle = '1';
+    btn.addEventListener('click', () => {
+      const current = document.documentElement.getAttribute('data-theme') || 'dark';
+      applyTheme(current === 'soft' ? 'dark' : 'soft');
+    });
   });
 }
 
 async function hideUsersNavForRecruiter() {
-  const usersLinks = Array.from(document.querySelectorAll('.sidebar-link[href="/users"]'));
+  const usersLinks = Array.from(document.querySelectorAll('.nav-links a[href="/users"]'));
   if (!usersLinks.length) return;
   const token = localStorage.getItem('accessToken') || '';
   if (!token) {
@@ -79,16 +90,15 @@ async function hideUsersNavForRecruiter() {
       usersLinks.forEach((a) => a.remove());
     }
   } catch {
+    // Keep the current nav if profile request fails.
   }
 }
 
-window.UI = { initStarsAndParticles, initClock, setActiveNav, initThemeToggle, hideUsersNavForRecruiter, initSidebarToggle };
+window.UI = { initStarsAndParticles, initClock, setActiveNav, initThemeToggle, hideUsersNavForRecruiter };
 
 document.addEventListener('DOMContentLoaded', () => {
   initThemeToggle();
   initClock();
-  initSidebarToggle();
   hideUsersNavForRecruiter();
 });
-
 

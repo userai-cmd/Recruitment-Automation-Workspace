@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>SAT Recruitment Platform - Головна</title>
+    <title>SAT_Recrut - Головна</title>
     <link rel="stylesheet" href="/ui.css" />
     <style>
       .hero {
@@ -71,18 +71,18 @@
         margin-top:18px;
         border-radius:20px;
         padding:16px;
-        background:linear-gradient(180deg,rgba(8, 20, 38, 0.82),rgba(5, 14, 28, 0.92));
-        border:1px solid rgba(116, 198, 255, 0.22);
-        box-shadow:inset 0 1px 0 rgba(255, 255, 255, 0.03), 0 18px 40px rgba(0, 0, 0, 0.28);
+        background:linear-gradient(180deg,rgba(8,20,38,0.82),rgba(5,14,28,0.92));
+        border:1px solid rgba(116,198,255,0.22);
+        box-shadow:inset 0 1px 0 rgba(255,255,255,0.03),0 18px 40px rgba(0,0,0,0.28);
       }
       .tasksTitle{font-size:14px;font-weight:900;letter-spacing:.5px;text-transform:uppercase}
-      .taskCols{display:grid;grid-template-columns:repeat(3,minmax(0, 1fr));gap:12px;margin-top:12px}
-      .taskCol{border:1px solid rgba(116, 198, 255, 0.16);border-radius:14px;padding:10px;background:rgba(7, 20, 38, .45)}
+      .taskCols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:12px}
+      .taskCol{border:1px solid rgba(116,198,255,0.16);border-radius:14px;padding:10px;background:rgba(7,20,38,.45)}
       .taskCol h4{margin:0 0 8px;font-size:12px;color:#9eb5d6;text-transform:uppercase;letter-spacing:.6px}
-      .taskItem{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;padding:8px 0;border-top:1px dashed rgba(128, 188, 255, .16)}
+      .taskItem{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;padding:8px 0;border-top:1px dashed rgba(128,188,255,.16)}
       .taskItem:first-of-type{border-top:none;padding-top:0}
       .taskMeta{font-size:11px;color:#9eb5d6;margin-top:4px}
-      .taskDone{border:1px solid rgba(116, 198, 255, .25);background:rgba(6, 18, 34, .6);color:#d9eeff;border-radius:8px;padding:4px 7px;font-size:11px;cursor:pointer}
+      .taskDone{border:1px solid rgba(116,198,255,.25);background:rgba(6,18,34,.6);color:#d9eeff;border-radius:8px;padding:4px 7px;font-size:11px;cursor:pointer}
       .taskEmpty{color:#7e94b8;font-size:12px}
       .footer-note {
         margin-top: 20px;
@@ -111,89 +111,84 @@
     <div id="stars"></div>
     <div id="particles"></div>
 
-    <div class="app-container">
-      <aside class="sidebar" id="sidebar">
-        <div class="sidebar-nav">
-          <a href="/home" class="sidebar-link"><span>🏠</span> Головна</a>
-          <a href="/candidate" class="sidebar-link"><span>📝</span> Анкета</a>
-          <a href="/dashboard" class="sidebar-link"><span>📊</span> Кандидати</a>
-          <a href="/kpi" class="sidebar-link"><span>📈</span> КПІ</a>
-          <a href="/motivation" class="sidebar-link"><span>💰</span> Мотивація</a>
-          <a href="/users" class="sidebar-link"><span>👥</span> Користувачі</a>
-        </div>
-      </aside>
-
-      <main class="main-content">
-        <header class="top-bar">
-          <button class="mobile-toggle">☰</button>
-          <div class="top-bar-center">
-            <h1 class="top-bar-title">SAT Recruitment Platform</h1>
+    <div class="page">
+      <div class="shell">
+        <nav class="top-nav">
+          <a class="brand" href="/home">
+            <span class="brand-text">
+              <span class="brand-title">SAT_Recrut</span>
+              <span class="brand-subtitle">Recruitment Platform</span>
+            </span>
+          </a>
+          <div class="nav-links">
+            <a class="active" href="/home">Головна</a>
+            <a href="/candidate">Анкета кандидата</a>
+            <a href="/dashboard">Кандидати</a>
+            <a href="/kpi">КПІ</a>
+            <a href="/motivation">Мотивація</a>
+            <a href="/users">Користувачі</a>
           </div>
-          <div class="top-bar-right">
-            <div class="nav-clock">
-              <div class="nav-clock-time" id="clock">00:00:00</div>
-              <div class="nav-clock-date" id="clock-date">Понеділок, 1 січня</div>
-            </div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="status-pill"><div class="status-dot"></div>Система активна</div>
             <button class="theme-toggle" data-theme-toggle type="button">Soft</button>
-            <button class="theme-toggle" id="logoutBtn" style="background:rgba(255,50,50,0.15);border-color:rgba(255,50,50,0.3);color:#ff8080;">Вихід</button>
+            <div class="nav-clock">
+              <div class="nav-clock-time" id="clock">--:--:--</div>
+              <div class="nav-clock-date" id="clock-date">—</div>
+            </div>
           </div>
-        </header>
+        </nav>
 
-        <div class="page">
-          <div class="shell">
-            <section class="hero">
-              <div class="core-wrap" aria-hidden="true">
-                <div class="core-eye"><div class="outer"></div><div class="mid"></div></div>
+        <section class="hero">
+          <div class="core-wrap" aria-hidden="true">
+            <div class="core-eye"><div class="outer"></div><div class="mid"></div></div>
+          </div>
+          <div class="hero-content">
+            <div class="eyebrow">SAT_Recrut</div>
+            <h1 class="title">Вітаємо<br/>в системі рекрутингу</h1>
+            <p class="subtitle home-subtitle">Єдиний центр керування рекрутингом: додавання кандидата, база даних, KPI та статистика воронки.</p>
+            <div class="quick-stats">
+              <div class="quick-stat">
+                <div class="quick-stat-value" id="homeStatTotal">-</div>
+                <div class="quick-stat-label">Кандидатів</div>
+                <div class="quick-stat-sub">у базі</div>
               </div>
-              <div class="hero-content">
-                <div class="eyebrow">SAT_Recrut</div>
-                <h1 class="title">Вітаємо<br/>в системі рекрутингу</h1>
-                <p class="subtitle home-subtitle">Єдиний центр керування рекрутингом: додавання кандидата, база даних, KPI та статистика воронки.</p>
-                <div class="quick-stats">
-                  <div class="quick-stat">
-                    <div class="quick-stat-value" id="homeStatTotal">-</div>
-                    <div class="quick-stat-label">Кандидатів</div>
-                    <div class="quick-stat-sub">у базі</div>
-                  </div>
-                  <div class="quick-stat quick-stat-today">
-                    <div class="quick-stat-value" id="homeStatToday">-</div>
-                    <div class="quick-stat-label">Сьогодні</div>
-                    <div class="quick-stat-sub">нових заявок</div>
-                  </div>
-                  <div class="quick-stat quick-stat-active">
-                    <div class="quick-stat-value" id="homeStatActive">-</div>
-                    <div class="quick-stat-label">Активних</div>
-                    <div class="quick-stat-sub">в обробці</div>
-                  </div>
-                </div>
-                <div class="home-search">
-                  <input type="text" placeholder="Пошук по модулях..." />
-                </div>
+              <div class="quick-stat quick-stat-today">
+                <div class="quick-stat-value" id="homeStatToday">-</div>
+                <div class="quick-stat-label">Сьогодні</div>
+                <div class="quick-stat-sub">нових заявок</div>
               </div>
-            </section>
-
-            <div class="tasksPanel">
-              <div class="tasksTitle">Мої задачі</div>
-              <div class="taskCols">
-                <div class="taskCol">
-                  <h4>Сьогодні</h4>
-                  <div id="tasksToday"></div>
-                </div>
-                <div class="taskCol">
-                  <h4>Прострочені</h4>
-                  <div id="tasksOverdue"></div>
-                </div>
-                <div class="taskCol">
-                  <h4>Цього тижня</h4>
-                  <div id="tasksWeek"></div>
-                </div>
+              <div class="quick-stat quick-stat-active">
+                <div class="quick-stat-value" id="homeStatActive">-</div>
+                <div class="quick-stat-label">Активних</div>
+                <div class="quick-stat-sub">в обробці</div>
               </div>
             </div>
+            <div class="home-search">
+              <input type="text" placeholder="Пошук по модулях..." />
+            </div>
+          </div>
+        </section>
 
-            <div class="footer-note">Unified Recruiter Dashboard · SAT_Recrut Automation</div>
+        <div class="tasksPanel">
+          <div class="tasksTitle">Мої задачі</div>
+          <div class="taskCols">
+            <div class="taskCol">
+              <h4>Сьогодні</h4>
+              <div id="tasksToday"></div>
+            </div>
+            <div class="taskCol">
+              <h4>Прострочені</h4>
+              <div id="tasksOverdue"></div>
+            </div>
+            <div class="taskCol">
+              <h4>Цього тижня</h4>
+              <div id="tasksWeek"></div>
+            </div>
           </div>
         </div>
-      </main>
+
+        <div class="footer-note">Unified Recruiter Dashboard · BiG Dnipro Automation</div>
+      </div>
     </div>
 
     <script src="/ui.js"></script>
@@ -308,14 +303,8 @@
       window.UI?.setActiveNav('/home');
       window.UI?.initThemeToggle();
       window.UI?.hideUsersNavForRecruiter?.();
-      window.UI?.initSidebarToggle?.();
       loadHomeStats();
       loadTasks();
-
-      document.getElementById('logoutBtn')?.addEventListener('click', () => {
-        localStorage.removeItem('accessToken');
-        window.location.href = '/';
-      });
     </script>
   </body>
 </html>

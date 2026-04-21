@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>SAT Recruitment Platform - Анкета кандидата</title>
+    <title>SAT_Recrut - Анкета кандидата</title>
     <link rel="stylesheet" href="/ui.css" />
     <style>
       .wrap{display:flex;justify-content:center;align-items:flex-start}
@@ -56,146 +56,141 @@
     <div id="stars"></div>
     <div id="particles"></div>
 
-    <div class="app-container">
-      <aside class="sidebar" id="sidebar">
-        <div class="sidebar-nav">
-          <a href="/home" class="sidebar-link"><span>🏠</span> Головна</a>
-          <a href="/candidate" class="sidebar-link"><span>📝</span> Анкета</a>
-          <a href="/dashboard" class="sidebar-link"><span>📊</span> Кандидати</a>
-          <a href="/kpi" class="sidebar-link"><span>📈</span> КПІ</a>
-          <a href="/motivation" class="sidebar-link"><span>💰</span> Мотивація</a>
-          <a href="/users" class="sidebar-link"><span>👥</span> Користувачі</a>
-        </div>
-      </aside>
-
-      <main class="main-content">
-        <header class="top-bar">
-          <button class="mobile-toggle">☰</button>
-          <div class="top-bar-center">
-            <h1 class="top-bar-title">SAT Recruitment Platform</h1>
+    <div class="page">
+      <div class="shell">
+        <nav class="top-nav">
+          <a class="brand" href="/home">
+            <span class="brand-text">
+              <span class="brand-title">SAT_Recrut</span>
+              <span class="brand-subtitle">Recruitment Platform</span>
+            </span>
+          </a>
+          <div class="nav-links">
+            <a href="/home">Головна</a>
+            <a class="active" href="/candidate">Анкета кандидата</a>
+            <a href="/dashboard">Кандидати</a>
+            <a href="/kpi">КПІ</a>
+            <a href="/motivation">Мотивація</a>
+            <a href="/users">Користувачі</a>
           </div>
-          <div class="top-bar-right">
-            <div class="nav-clock">
-              <div class="nav-clock-time" id="clock">00:00:00</div>
-              <div class="nav-clock-date" id="clock-date">Понеділок, 1 січня</div>
-            </div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="status-pill"><div class="status-dot"></div>Система активна</div>
             <button class="theme-toggle" data-theme-toggle type="button">Soft</button>
-            <button class="theme-toggle" id="logoutBtn" style="background:rgba(255,50,50,0.15);border-color:rgba(255,50,50,0.3);color:#ff8080;">Вихід</button>
-          </div>
-        </header>
-
-        <div class="page">
-          <div class="shell">
-            <section class="hero">
-              <div class="core-wrap" aria-hidden="true">
-                <div class="core-eye"><div class="outer"></div><div class="mid"></div></div>
-              </div>
-              <div class="hero-content">
-                <div class="eyebrow">SAT_Recrut</div>
-                <h1 class="title">Панель додавання кандидата</h1>
-                <p class="subtitle">Внесення даних кандидата в єдину систему рекрутингу в стилі futuristic control interface.</p>
-              </div>
-            </section>
-
-            <div class="wrap">
-              <div class="cardPanel panel">
-                <div class="formHeader">
-                  <div>
-                    <div class="formTag">Create candidate</div>
-                    <h2 class="formTitle">Додати кандидата</h2>
-                    <p class="formSub">Заповни основні поля нижче, щоб швидко внести нового кандидата до системи.</p>
-                  </div>
-                  <div class="iconBox" aria-hidden="true">
-                    <svg viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
-                  </div>
-                </div>
-
-                <form id="candidatePageForm">
-                  <div class="grid">
-                    <div class="field">
-                      <label class="label" for="pFullName">ПІБ *</label>
-                      <input class="input" id="pFullName" required />
-                    </div>
-                    <div class="field">
-                      <label class="label" for="pPhone">Телефон *</label>
-                      <input class="input" id="pPhone" required />
-                    </div>
-                    <div class="field">
-                      <label class="label" for="pEmail">Email</label>
-                      <input class="input" id="pEmail" type="email" />
-                    </div>
-                    <div class="field">
-                      <label class="label" for="pPosition">Позиція</label>
-                      <select id="pPosition">
-                        <option value="">Оберіть позицію</option>
-                        <option value="Бригадир">Бригадир</option>
-                        <option value="Бригадир водіїв навантажувачів">Бригадир водіїв навантажувачів</option>
-                        <option value="Водій доставки">Водій доставки</option>
-                        <option value="Водій навантажувача">Водій навантажувача</option>
-                        <option value="Двірник">Двірник</option>
-                        <option value="Диспетчер">Диспетчер</option>
-                        <option value="Електрик">Електрик</option>
-                        <option value="Завідувач господарства">Завідувач господарства</option>
-                        <option value="Керівник РСП">Керівник РСП</option>
-                        <option value="Керуючий відділенням">Керуючий відділенням</option>
-                        <option value="Менеджер з адміністративної діяльності">Менеджер з адміністративної діяльності</option>
-                        <option value="Менеджер з логістики">Менеджер з логістики</option>
-                        <option value="Оператор комп`ютерного набору">Оператор комп`ютерного набору</option>
-                        <option value="Підсобний робітник">Підсобний робітник</option>
-                        <option value="Прибиральник службових приміщень">Прибиральник службових приміщень</option>
-                        <option value="Приймальник товарів">Приймальник товарів</option>
-                        <option value="Сканувальник">Сканувальник</option>
-                        <option value="Слюсар з ремонту техніки">Слюсар з ремонту техніки</option>
-                        <option value="Транспортувальник">Транспортувальник</option>
-                        <option value="Фахівець з рекламації">Фахівець з рекламації</option>
-                        <option value="Фахівець із роботи з інцидентами">Фахівець із роботи з інцидентами</option>
-                      </select>
-                    </div>
-                    <div class="field">
-                      <label class="label" for="pCity">Місто</label>
-                      <select id="pCity">
-                        <option value="">Оберіть місто</option>
-                        <option value="Біла Церква">Біла Церква</option><option value="Бориспіль">Бориспіль</option><option value="Вінниця">Вінниця</option>
-                        <option value="Дніпро">Дніпро</option><option value="Житомир">Житомир</option><option value="Запоріжжя">Запоріжжя</option>
-                        <option value="Івано-Франківськ">Івано-Франківськ</option><option value="Кам'янське">Кам'янське</option><option value="Кам'янець-Подільський">Кам'янець-Подільський</option>
-                        <option value="Київ">Київ</option><option value="Кременчук">Кременчук</option><option value="Кривий Ріг">Кривий Ріг</option>
-                        <option value="Кропивницький">Кропивницький</option><option value="Луцьк">Луцьк</option><option value="Львів">Львів</option>
-                        <option value="Миколаїв">Миколаїв</option><option value="Мукачево">Мукачево</option><option value="Нікополь">Нікополь</option>
-                        <option value="Одеса">Одеса</option><option value="Олександрія">Олександрія</option><option value="Охтирка">Охтирка</option>
-                        <option value="Полтава">Полтава</option><option value="Рівне">Рівне</option><option value="Суми">Суми</option>
-                        <option value="Тернопіль">Тернопіль</option><option value="Ужгород">Ужгород</option><option value="Умань">Умань</option>
-                        <option value="Харків">Харків</option><option value="Хмельницький">Хмельницький</option><option value="Черкаси">Черкаси</option>
-                        <option value="Чернігів">Чернігів</option>
-                      </select>
-                    </div>
-                    <div class="field">
-                      <label class="label" for="pSource">Джерело</label>
-                      <select id="pSource">
-                        <option value="">Оберіть джерело</option>
-                        <option value="Work.ua">Work.ua</option><option value="Robota.ua">Robota.ua</option><option value="Telegram">Telegram</option>
-                        <option value="Viber">Viber</option><option value="Рекомендація">Рекомендація</option><option value="Сайт компанії">Сайт компанії</option>
-                        <option value="Соцмережі">Соцмережі</option><option value="Інше">Інше</option>
-                      </select>
-                    </div>
-                    <div class="field full">
-                      <label class="label" for="pComment">Коментар</label>
-                      <textarea class="textarea" id="pComment"></textarea>
-                    </div>
-                  </div>
-
-                  <div class="footer">
-                    <div class="footerText">Перевір коректність контактних даних та джерела кандидата перед відправкою.</div>
-                    <button class="button" type="submit">Відправити</button>
-                  </div>
-                </form>
-
-                <div id="candOk" class="msg ok">Кандидата додано!</div>
-                <div id="candErr" class="msg err">Помилка створення. Перевір з'єднання та спробуй ще раз.</div>
-              </div>
+            <div class="nav-clock">
+              <div class="nav-clock-time" id="clock">--:--:--</div>
+              <div class="nav-clock-date" id="clock-date">—</div>
             </div>
           </div>
+        </nav>
+
+        <section class="hero">
+          <div class="core-wrap" aria-hidden="true">
+            <div class="core-eye"><div class="outer"></div><div class="mid"></div></div>
+          </div>
+          <div class="hero-content">
+            <div class="eyebrow">SAT_Recrut</div>
+            <h1 class="title">Панель додавання кандидата</h1>
+            <p class="subtitle">Внесення даних кандидата в єдину систему рекрутингу в стилі futuristic control interface.</p>
+          </div>
+        </section>
+
+        <div class="wrap">
+          <div class="cardPanel panel">
+            <div class="formHeader">
+              <div>
+                <div class="formTag">Create candidate</div>
+                <h2 class="formTitle">Додати кандидата</h2>
+                <p class="formSub">Заповни основні поля нижче, щоб швидко внести нового кандидата до системи.</p>
+              </div>
+              <div class="iconBox" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+              </div>
+            </div>
+
+            <form id="candidatePageForm">
+              <div class="grid">
+                <div class="field">
+                  <label class="label" for="pFullName">ПІБ *</label>
+                  <input class="input" id="pFullName" required />
+                </div>
+                <div class="field">
+                  <label class="label" for="pPhone">Телефон *</label>
+                  <input class="input" id="pPhone" required />
+                </div>
+                <div class="field">
+                  <label class="label" for="pEmail">Email</label>
+                  <input class="input" id="pEmail" type="email" />
+                </div>
+                <div class="field">
+                  <label class="label" for="pPosition">Позиція</label>
+                  <select id="pPosition">
+                    <option value="">Оберіть позицію</option>
+                    <option value="Бригадир">Бригадир</option>
+                    <option value="Бригадир водіїв навантажувачів">Бригадир водіїв навантажувачів</option>
+                    <option value="Водій доставки">Водій доставки</option>
+                    <option value="Водій навантажувача">Водій навантажувача</option>
+                    <option value="Двірник">Двірник</option>
+                    <option value="Диспетчер">Диспетчер</option>
+                    <option value="Електрик">Електрик</option>
+                    <option value="Завідувач господарства">Завідувач господарства</option>
+                    <option value="Керівник РСП">Керівник РСП</option>
+                    <option value="Керуючий відділенням">Керуючий відділенням</option>
+                    <option value="Менеджер з адміністративної діяльності">Менеджер з адміністративної діяльності</option>
+                    <option value="Менеджер з логістики">Менеджер з логістики</option>
+                    <option value="Оператор комп`ютерного набору">Оператор комп`ютерного набору</option>
+                    <option value="Підсобний робітник">Підсобний робітник</option>
+                    <option value="Прибиральник службових приміщень">Прибиральник службових приміщень</option>
+                    <option value="Приймальник товарів">Приймальник товарів</option>
+                    <option value="Сканувальник">Сканувальник</option>
+                    <option value="Слюсар з ремонту техніки">Слюсар з ремонту техніки</option>
+                    <option value="Транспортувальник">Транспортувальник</option>
+                    <option value="Фахівець з рекламації">Фахівець з рекламації</option>
+                    <option value="Фахівець із роботи з інцидентами">Фахівець із роботи з інцидентами</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label class="label" for="pCity">Місто</label>
+                  <select id="pCity">
+                    <option value="">Оберіть місто</option>
+                    <option value="Біла Церква">Біла Церква</option><option value="Бориспіль">Бориспіль</option><option value="Вінниця">Вінниця</option>
+                    <option value="Дніпро">Дніпро</option><option value="Житомир">Житомир</option><option value="Запоріжжя">Запоріжжя</option>
+                    <option value="Івано-Франківськ">Івано-Франківськ</option><option value="Кам'янське">Кам'янське</option><option value="Кам'янець-Подільський">Кам'янець-Подільський</option>
+                    <option value="Київ">Київ</option><option value="Кременчук">Кременчук</option><option value="Кривий Ріг">Кривий Ріг</option>
+                    <option value="Кропивницький">Кропивницький</option><option value="Луцьк">Луцьк</option><option value="Львів">Львів</option>
+                    <option value="Миколаїв">Миколаїв</option><option value="Мукачево">Мукачево</option><option value="Нікополь">Нікополь</option>
+                    <option value="Одеса">Одеса</option><option value="Олександрія">Олександрія</option><option value="Охтирка">Охтирка</option>
+                    <option value="Полтава">Полтава</option><option value="Рівне">Рівне</option><option value="Суми">Суми</option>
+                    <option value="Тернопіль">Тернопіль</option><option value="Ужгород">Ужгород</option><option value="Умань">Умань</option>
+                    <option value="Харків">Харків</option><option value="Хмельницький">Хмельницький</option><option value="Черкаси">Черкаси</option>
+                    <option value="Чернігів">Чернігів</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label class="label" for="pSource">Джерело</label>
+                  <select id="pSource">
+                    <option value="">Оберіть джерело</option>
+                    <option value="Work.ua">Work.ua</option><option value="Robota.ua">Robota.ua</option><option value="Telegram">Telegram</option>
+                    <option value="Viber">Viber</option><option value="Рекомендація">Рекомендація</option><option value="Сайт компанії">Сайт компанії</option>
+                    <option value="Соцмережі">Соцмережі</option><option value="Інше">Інше</option>
+                  </select>
+                </div>
+                <div class="field full">
+                  <label class="label" for="pComment">Коментар</label>
+                  <textarea class="textarea" id="pComment"></textarea>
+                </div>
+              </div>
+
+              <div class="footer">
+                <div class="footerText">Перевір коректність контактних даних та джерела кандидата перед відправкою.</div>
+                <button class="button" type="submit">Відправити</button>
+              </div>
+            </form>
+
+            <div id="candOk" class="msg ok">Кандидата додано!</div>
+            <div id="candErr" class="msg err">Помилка створення. Перевір з'єднання та спробуй ще раз.</div>
+          </div>
         </div>
-      </main>
+      </div>
     </div>
 
     <script src="/ui.js"></script>
@@ -206,12 +201,7 @@
       window.UI?.setActiveNav('/candidate');
       window.UI?.initThemeToggle();
       window.UI?.hideUsersNavForRecruiter?.();
-      window.UI?.initSidebarToggle?.();
-
-      document.getElementById('logoutBtn')?.addEventListener('click', () => {
-        localStorage.removeItem('accessToken');
-        window.location.href = '/';
-      });
     </script>
   </body>
 </html>
+
