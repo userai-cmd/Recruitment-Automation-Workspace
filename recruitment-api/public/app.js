@@ -561,18 +561,22 @@ function refreshCandidatesView() {
 async function loadCandidatesTable() {
   dashboardUser = await api('/auth/me');
   document.getElementById('subline').textContent = `Ви: ${dashboardUser.email} (${dashboardUser.role})`;
+  
   const recruiterFilter = document.getElementById('recruiterFilter');
   if (dashboardUser.role === 'admin' && recruiterFilter) {
-    const users = await api('/auth/users');
-    const recruiters = users.filter((u) => u.role === 'recruiter');
-    recruiterFilter.style.display = '';
-    recruiterFilter.innerHTML = '<option value="">Всі рекрутери</option>';
-    recruiters.forEach((u) => {
-      const opt = document.createElement('option');
-      opt.value = u.id;
-      opt.textContent = `${u.fullName || u.email}${u.isActive ? '' : ' (inactive)'}`;
-      recruiterFilter.appendChild(opt);
-    });
+    // Only populate the list if it's empty to avoid re-rendering issues
+    if (recruiterFilter.options.length <= 1) {
+      const users = await api('/auth/users');
+      const recruiters = users.filter((u) => u.role === 'recruiter');
+      recruiterFilter.style.display = '';
+      recruiterFilter.innerHTML = '<option value="">Всі рекрутери</option>';
+      recruiters.forEach((u) => {
+        const opt = document.createElement('option');
+        opt.value = u.id;
+        opt.textContent = `${u.fullName || u.email}${u.isActive ? '' : ' (inactive)'}`;
+        recruiterFilter.appendChild(opt);
+      });
+    }
     recruiterFilter.value = selectedRecruiterId;
   } else if (recruiterFilter) {
     recruiterFilter.style.display = 'none';
@@ -582,16 +586,18 @@ async function loadCandidatesTable() {
   const loading = document.getElementById('loading');
   if (loading) loading.style.display = 'block';
 
+  // Use selectedRecruiterId for admin (empty means all), or dashboardUser.id for recruiter
   const targetRecruiterId = dashboardUser.role === 'admin' ? selectedRecruiterId : dashboardUser.id;
+  
   const chunks = await Promise.all(
-    STATUSES.map((status) =>
-      api(
-        `/candidates?status=${encodeURIComponent(status)}${
-          targetRecruiterId ? `&recruiterId=${encodeURIComponent(targetRecruiterId)}` : ''
-        }`,
-      ),
-    ),
+    STATUSES.map((status) => {
+      const url = `/candidates?status=${encodeURIComponent(status)}${
+        targetRecruiterId ? `&recruiterId=${encodeURIComponent(targetRecruiterId)}` : ''
+      }`;
+      return api(url);
+    }),
   );
+  
   dashboardCandidates = chunks.flat();
   updatePositionFilter(dashboardCandidates);
   currentPage = 1;
