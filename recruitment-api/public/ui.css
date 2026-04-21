@@ -51,6 +51,7 @@ body::after{background:
   width:100vw;
   margin-left:calc(50% - 50vw - ((var(--page-left-pad) - var(--page-right-pad)) / 2));
   margin-right:calc(50% - 50vw - ((var(--page-left-pad) - var(--page-right-pad)) / 2));
+  margin-top:-18px;
   padding:8px 20px;min-height:56px;border-radius:0 0 18px 18px}
 .top-nav::before{content:"";position:absolute;left:0;right:0;top:0;height:1px;background:linear-gradient(90deg,transparent,rgba(134,219,255,0.75),transparent);opacity:.7}
 .brand{display:inline-flex;align-items:center;gap:14px;text-decoration:none;min-width:0;transition:filter .25s}
@@ -141,6 +142,7 @@ body::after{background:
   .left-nav-title{padding:0 0 8px;border-bottom:none}
   .left-nav .nav-links{flex-direction:row;flex-wrap:wrap}
   .top-nav{
+    margin-top:0;
     grid-template-columns:1fr;
     grid-template-areas:
       "brand"
