@@ -190,6 +190,96 @@ function showActionError(error, fallback = 'Операцію не виконан
   alert(message);
 }
 
+/* ── UNDO SNACKBAR ─────────────────────────────────────────── */
+let _snackTimer = null;
+let _snackCdInterval = null;
+
+function showUndoSnackbar(message, undoFn, duration = 5000) {
+  const existing = document.getElementById('undoSnackbar');
+  if (existing) { existing.remove(); }
+  if (_snackTimer) clearTimeout(_snackTimer);
+  if (_snackCdInterval) clearInterval(_snackCdInterval);
+
+  const bar = document.createElement('div');
+  bar.id = 'undoSnackbar';
+  bar.className = 'undo-snackbar';
+
+  const msg = document.createElement('span');
+  msg.className = 'snackbar-msg';
+  msg.textContent = message;
+
+  let remaining = Math.round(duration / 1000);
+  const cd = document.createElement('span');
+  cd.className = 'snackbar-cd';
+  cd.textContent = `${remaining}с`;
+
+  const undoBtn = document.createElement('button');
+  undoBtn.className = 'snackbar-undo';
+  undoBtn.type = 'button';
+  undoBtn.textContent = 'Скасувати';
+  undoBtn.addEventListener('click', () => {
+    clearTimeout(_snackTimer);
+    clearInterval(_snackCdInterval);
+    bar.classList.remove('open');
+    setTimeout(() => bar.remove(), 220);
+    undoFn();
+  });
+
+  bar.appendChild(msg);
+  bar.appendChild(cd);
+  bar.appendChild(undoBtn);
+  document.body.appendChild(bar);
+  requestAnimationFrame(() => bar.classList.add('open'));
+
+  _snackCdInterval = setInterval(() => {
+    remaining--;
+    cd.textContent = `${remaining}с`;
+    if (remaining <= 0) clearInterval(_snackCdInterval);
+  }, 1000);
+
+  _snackTimer = setTimeout(() => {
+    clearInterval(_snackCdInterval);
+    bar.classList.remove('open');
+    setTimeout(() => bar.remove(), 220);
+  }, duration);
+}
+
+/* ── CONFIRM MODAL ─────────────────────────────────────────── */
+function showConfirmModal({ icon = '⚠️', title, body, confirmLabel = 'Підтвердити', danger = false } = {}) {
+  return new Promise((resolve) => {
+    const overlay = document.createElement('div');
+    overlay.className = 'confirm-overlay';
+
+    const modal = document.createElement('div');
+    modal.className = 'confirm-modal';
+    modal.innerHTML = `
+      <div class="confirm-icon">${icon}</div>
+      <div class="confirm-title">${title || ''}</div>
+      <div class="confirm-body">${body || ''}</div>
+      <div class="confirm-actions">
+        <button class="confirm-btn cancel" type="button">Скасувати</button>
+        <button class="confirm-btn ${danger ? 'danger' : 'cancel'}" type="button" id="_confirmOk">${confirmLabel}</button>
+      </div>`;
+
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+    requestAnimationFrame(() => overlay.classList.add('open'));
+
+    const close = (result) => {
+      overlay.classList.remove('open');
+      setTimeout(() => overlay.remove(), 200);
+      resolve(result);
+    };
+
+    modal.querySelector('.cancel').addEventListener('click', () => close(false));
+    modal.querySelector('#_confirmOk').addEventListener('click', () => close(true));
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) close(false); });
+    document.addEventListener('keydown', function esc(e) {
+      if (e.key === 'Escape') { document.removeEventListener('keydown', esc); close(false); }
+    });
+  });
+}
+
 function openFormModal(title, fields, submitLabel = 'Зберегти') {
   return new Promise((resolve) => {
     const overlay = document.createElement('div');
@@ -378,16 +468,44 @@ function renderCandidatesTable(candidates) {
     }
     select.addEventListener('change', async () => {
       const next = select.value;
-      if (next === cand.status) return;
+      const prev = cand.status;
+      if (next === prev) return;
+
+      // Optimistic UI update
+      select.className = `statusSelect status-${next}`;
+      cand.status = next;
+
       try {
         await api(`/candidates/${cand.id}/status`, {
           method: 'PATCH',
           body: JSON.stringify({ toStatus: next, reason: 'Updated from table UI' }),
         });
-        await loadCandidatesTable();
       } catch (e) {
-        console.error(e);
+        select.value = prev;
+        select.className = `statusSelect status-${prev}`;
+        cand.status = prev;
+        showActionError(e, 'Не вдалося змінити статус');
+        return;
       }
+
+      const nextLabel = STATUS_LABELS[next] || next;
+      const prevLabel = STATUS_LABELS[prev] || prev;
+      showUndoSnackbar(
+        `${cand.fullName}: ${prevLabel} → ${nextLabel}`,
+        async () => {
+          try {
+            await api(`/candidates/${cand.id}/status`, {
+              method: 'PATCH',
+              body: JSON.stringify({ toStatus: prev, reason: 'Reverted via undo' }),
+            });
+            select.value = prev;
+            select.className = `statusSelect status-${prev}`;
+            cand.status = prev;
+          } catch (e) {
+            showActionError(e, 'Не вдалося скасувати');
+          }
+        },
+      );
     });
     statusTd.appendChild(select);
 
@@ -481,7 +599,13 @@ function renderCandidatesTable(candidates) {
     archiveBtn.disabled = false;
     archiveBtn.setAttribute('aria-disabled', 'false');
     archiveBtn.addEventListener('click', async () => {
-      const yes = window.confirm(`Архівувати кандидата "${cand.fullName}"?`);
+      const yes = await showConfirmModal({
+        icon: '🗑',
+        title: 'Архівувати кандидата?',
+        body: `<strong>${cand.fullName}</strong>${cand.phone ? ` · ${cand.phone}` : ''}<br>Кандидат буде переміщений до архіву та зникне зі списку.`,
+        confirmLabel: 'Архівувати',
+        danger: true,
+      });
       if (!yes) return;
       try {
         await api(`/candidates/${cand.id}`, { method: 'DELETE' });
@@ -720,6 +844,74 @@ function bindCandidatePage() {
   const form = document.getElementById('candidatePageForm');
   if (!form) return;
 
+  /* ── Dirty-form tracking (QW-7) ── */
+  let formDirty = false;
+  let formSubmitted = false;
+
+  const badge = document.createElement('div');
+  badge.className = 'dirty-warn-badge';
+  badge.innerHTML = '● Незбережені зміни';
+  document.body.appendChild(badge);
+
+  const markDirty = () => {
+    if (formSubmitted) return;
+    formDirty = true;
+    badge.classList.add('show');
+  };
+  const markClean = () => {
+    formDirty = false;
+    badge.classList.remove('show');
+  };
+
+  form.querySelectorAll('input,select,textarea').forEach((el) => {
+    el.addEventListener('input', markDirty);
+    el.addEventListener('change', markDirty);
+  });
+
+  window.addEventListener('beforeunload', (e) => {
+    if (!formDirty || formSubmitted) return;
+    e.preventDefault();
+    e.returnValue = 'Є незбережені дані. Покинути сторінку?';
+  });
+
+  // Intercept left-nav links
+  document.querySelectorAll('.left-nav .nav-links a').forEach((a) => {
+    a.addEventListener('click', async (e) => {
+      if (!formDirty || formSubmitted) return;
+      e.preventDefault();
+      const href = a.getAttribute('href');
+      const leave = await showConfirmModal({
+        icon: '⚠️',
+        title: 'Незбережені зміни',
+        body: 'Форма містить незбережені дані.<br>Якщо ви покинете сторінку — вони будуть втрачені.',
+        confirmLabel: 'Покинути',
+        danger: false,
+      });
+      if (leave) { formDirty = false; window.location.href = href; }
+    });
+  });
+
+  // Intercept logout button
+  document.addEventListener('click', async (e) => {
+    const logoutBtn = e.target.closest('#logoutBtn');
+    if (!logoutBtn) return;
+    if (!formDirty || formSubmitted) return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    const leave = await showConfirmModal({
+      icon: '⚠️',
+      title: 'Незбережені зміни',
+      body: 'Форма містить незбережені дані.<br>Якщо ви вийдете — вони будуть втрачені.',
+      confirmLabel: 'Вийти',
+      danger: false,
+    });
+    if (leave) {
+      formDirty = false;
+      localStorage.removeItem('accessToken');
+      window.location.href = '/';
+    }
+  }, true);
+
   const phoneInput = document.getElementById('pPhone');
   const dupWarn = document.getElementById('phoneDupWarn');
   let dupConfirmed = false;
@@ -786,6 +978,8 @@ function bindCandidatePage() {
       };
       await api('/candidates', { method: 'POST', body: JSON.stringify(payload) });
       if (ok) ok.style.display = 'block';
+      formSubmitted = true;
+      markClean();
       form.reset();
       if (dupWarn) dupWarn.style.display = 'none';
       setTimeout(() => { window.location.href = '/dashboard'; }, 650);

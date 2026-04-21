@@ -423,3 +423,51 @@ body::after{background:
   box-shadow:0 8px 18px rgba(90,130,180,0.18) !important;
 }
 
+/* UNDO SNACKBAR */
+.undo-snackbar{
+  position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(16px);z-index:9999;
+  display:flex;align-items:center;gap:14px;padding:13px 20px;
+  background:rgba(10,24,46,0.97);border:1px solid rgba(116,198,255,0.28);
+  border-radius:14px;box-shadow:0 18px 44px rgba(0,0,0,0.55),0 0 0 1px rgba(255,255,255,0.03);
+  font-size:13px;color:#d9eeff;white-space:nowrap;
+  opacity:0;pointer-events:none;transition:opacity .22s ease,transform .22s ease}
+.undo-snackbar.open{opacity:1;pointer-events:auto;transform:translateX(-50%) translateY(0)}
+.snackbar-msg{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.snackbar-cd{font-size:11px;color:var(--muted);min-width:20px;text-align:right;font-variant-numeric:tabular-nums}
+.snackbar-undo{padding:6px 13px;border-radius:8px;border:1px solid rgba(103,181,255,0.35);
+  background:rgba(40,167,255,0.15);color:#7dd3fc;font-size:12px;font-weight:800;
+  cursor:pointer;transition:.15s ease;white-space:nowrap}
+.snackbar-undo:hover{background:rgba(40,167,255,0.28);border-color:rgba(103,181,255,0.6);color:#fff}
+:root[data-theme='soft'] .undo-snackbar{background:rgba(248,252,255,0.98);border-color:rgba(132,173,225,0.4);color:#0d213d;box-shadow:0 10px 30px rgba(70,108,158,0.22)}
+:root[data-theme='soft'] .snackbar-undo{background:rgba(47,133,232,0.1);border-color:rgba(93,152,232,0.4);color:#2f85e8}
+
+/* CONFIRM MODAL */
+.confirm-overlay{position:fixed;inset:0;background:rgba(2,8,18,.72);z-index:10000;
+  display:flex;align-items:center;justify-content:center;padding:16px;
+  opacity:0;pointer-events:none;transition:opacity .18s ease}
+.confirm-overlay.open{opacity:1;pointer-events:auto}
+.confirm-modal{width:min(420px,94vw);background:linear-gradient(180deg,rgba(8,20,38,0.98),rgba(5,14,28,0.99));
+  border:1px solid rgba(116,198,255,0.28);border-radius:20px;padding:24px;
+  box-shadow:0 24px 60px rgba(0,0,0,0.65);transform:scale(.94);transition:transform .18s ease}
+.confirm-overlay.open .confirm-modal{transform:scale(1)}
+.confirm-icon{font-size:28px;margin-bottom:12px;line-height:1}
+.confirm-title{font-size:17px;font-weight:900;color:#f4fbff;margin-bottom:8px}
+.confirm-body{font-size:14px;color:var(--muted);line-height:1.6;margin-bottom:22px;word-break:break-word}
+.confirm-actions{display:flex;gap:10px;justify-content:flex-end}
+.confirm-btn{padding:10px 20px;border-radius:12px;border:none;font-size:13px;font-weight:800;cursor:pointer;transition:.15s ease}
+.confirm-btn.cancel{background:rgba(5,14,26,0.54);border:1px solid rgba(103,181,255,0.18);color:#d9eeff}
+.confirm-btn.cancel:hover{border-color:rgba(103,181,255,0.42);color:#fff}
+.confirm-btn.danger{background:linear-gradient(180deg,rgba(220,50,50,0.9),rgba(170,20,20,0.9));color:#fff;
+  box-shadow:0 6px 18px rgba(200,30,30,0.3)}
+.confirm-btn.danger:hover{box-shadow:0 8px 24px rgba(200,30,30,0.45)}
+:root[data-theme='soft'] .confirm-modal{background:rgba(248,252,255,0.99);border-color:rgba(132,173,225,0.4)}
+:root[data-theme='soft'] .confirm-title{color:#0d213d}
+:root[data-theme='soft'] .confirm-btn.cancel{background:rgba(240,247,255,0.9);border-color:rgba(132,173,225,0.4);color:#1c3d6a}
+
+/* DIRTY FORM WARN */
+.dirty-warn-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;
+  background:rgba(255,170,0,0.12);border:1px solid rgba(255,170,0,0.3);
+  font-size:11px;font-weight:700;color:#ffc030;position:fixed;bottom:20px;right:20px;z-index:500;
+  opacity:0;pointer-events:none;transition:opacity .2s ease}
+.dirty-warn-badge.show{opacity:1}
+
