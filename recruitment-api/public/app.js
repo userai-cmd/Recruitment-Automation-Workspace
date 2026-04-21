@@ -537,7 +537,12 @@ function exportCsv() {
   for (const row of rows) {
     lines.push(
       columns
-        .map((k) => (k === 'status' ? STATUS_LABELS[row.status] || row.status : k === 'createdAt' ? formatDate(row.createdAt) : row[k]))
+        .map((k) => {
+          if (k === 'status') return STATUS_LABELS[row.status] || row.status;
+          if (k === 'createdAt') return formatDate(row.createdAt);
+          if (k === 'phone') return `="${String(row[k] ?? '')}"`;
+          return row[k];
+        })
         .map(esc)
         .join(sep),
     );
