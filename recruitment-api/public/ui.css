@@ -77,6 +77,15 @@ body::after{background:
   font-size:11px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;cursor:pointer;transition:.2s ease}
 .theme-toggle:hover{border-color:rgba(123,207,255,0.44);box-shadow:0 0 14px rgba(40,167,255,0.14)}
 .top-nav > div:last-child{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap;min-width:0}
+.page-mini-title{
+  font-size:13px;
+  font-weight:700;
+  color:#cfe5ff;
+  letter-spacing:.3px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
 .nav-clock{display:flex;flex-direction:column;align-items:flex-end;padding:6px 14px;border-radius:10px;background:rgba(0,12,35,0.7);
   border:1px solid rgba(0,150,255,0.2);flex-shrink:0}
 .nav-clock-time{font-size:16px;font-weight:700;color:#90ccff;letter-spacing:1.5px;font-variant-numeric:tabular-nums}
@@ -219,6 +228,7 @@ body::after{background:
 :root[data-theme='soft'] .left-nav-title{color:#d08a00;border-bottom-color:rgba(132,173,225,0.32)}
 :root[data-theme='soft'] .left-nav-title .sat-main{color:#c98200}
 :root[data-theme='soft'] .left-nav-title .sat-sub{color:#d08a00}
+:root[data-theme='soft'] .page-mini-title{color:#2a4f7f}
 :root[data-theme='soft'] .formTitle,
 :root[data-theme='soft'] .formTag,
 :root[data-theme='soft'] .formTag::before,
