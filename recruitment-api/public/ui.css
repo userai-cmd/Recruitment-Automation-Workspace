@@ -61,10 +61,10 @@ body::after{background:
 .top-nav .brand{
   grid-column:2;
   justify-self:center;
-  transform:none;
+  transform:translateX(46px);
 }
 .brand-subtitle{
-  font-size:21px;
+  font-size:24px;
   font-weight:800;
   color:#6ea8de;
   text-transform:none;
