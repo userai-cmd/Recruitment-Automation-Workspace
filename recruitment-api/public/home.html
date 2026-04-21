@@ -15,6 +15,7 @@
       .home-search {
         max-width: 460px;
         margin: 18px auto 0;
+        position: relative;
         display: flex;
         align-items: center;
         gap: 10px;
@@ -29,6 +30,31 @@
         background: none;
         color: var(--text);
         outline: none;
+      }
+      .module-results {
+        position: absolute;
+        top: calc(100% + 8px);
+        left: 0;
+        right: 0;
+        display: none;
+        z-index: 4;
+        border: 1px solid rgba(116, 198, 255, 0.32);
+        border-radius: 12px;
+        background: rgba(6, 18, 34, 0.98);
+        box-shadow: 0 18px 30px rgba(0, 0, 0, 0.35);
+        overflow: hidden;
+      }
+      .module-results.open { display: block; }
+      .module-result {
+        padding: 10px 12px;
+        font-size: 13px;
+        color: #d9eeff;
+        cursor: pointer;
+        border-top: 1px solid rgba(116, 198, 255, 0.14);
+      }
+      .module-result:first-child { border-top: none; }
+      .module-result:hover {
+        background: rgba(40, 167, 255, 0.18);
       }
       .quick-stats {
         margin: 18px auto 0;
@@ -167,7 +193,8 @@
               </div>
             </div>
             <div class="home-search">
-              <input type="text" placeholder="Пошук по модулях..." />
+              <input id="moduleSearchInput" type="text" placeholder="Пошук по модулях..." />
+              <div id="moduleSearchResults" class="module-results"></div>
             </div>
           </div>
         </section>
@@ -301,6 +328,65 @@
         renderTaskList('tasksWeek', week);
       }
 
+      function initModuleSearch() {
+        const input = document.getElementById('moduleSearchInput');
+        const results = document.getElementById('moduleSearchResults');
+        if (!input || !results) return;
+
+        const modules = [
+          { label: 'Головна', href: '/home', keywords: ['home', 'головна', 'старт'] },
+          { label: 'Анкета кандидата', href: '/candidate', keywords: ['анкета', 'кандидат', 'candidate', 'форма'] },
+          { label: 'Кандидати', href: '/dashboard', keywords: ['кандидати', 'база', 'pipeline'] },
+          { label: 'КПІ', href: '/kpi', keywords: ['кпі', 'kpi', 'аналітика', 'статистика'] },
+          { label: 'Мотивація', href: '/motivation', keywords: ['мотивація', 'бонус', 'премія'] },
+          { label: 'Користувачі', href: '/users', keywords: ['користувачі', 'users', 'рекрутер', 'адмін'] },
+        ];
+
+        const findMatches = (query) => {
+          const q = query.trim().toLowerCase();
+          if (!q) return [];
+          return modules.filter((m) => {
+            const text = `${m.label} ${m.keywords.join(' ')}`.toLowerCase();
+            return text.includes(q);
+          }).slice(0, 6);
+        };
+
+        const render = (items) => {
+          if (!items.length) {
+            results.classList.remove('open');
+            results.innerHTML = '';
+            return;
+          }
+          results.innerHTML = items
+            .map((m) => `<div class="module-result" data-href="${m.href}">${m.label}</div>`)
+            .join('');
+          results.classList.add('open');
+        };
+
+        input.addEventListener('input', () => render(findMatches(input.value)));
+
+        input.addEventListener('keydown', (e) => {
+          if (e.key !== 'Enter') return;
+          e.preventDefault();
+          const matches = findMatches(input.value);
+          if (matches.length) window.location.href = matches[0].href;
+        });
+
+        results.addEventListener('click', (e) => {
+          const row = e.target.closest('.module-result');
+          if (!row) return;
+          const href = row.getAttribute('data-href');
+          if (href) window.location.href = href;
+        });
+
+        document.addEventListener('click', (e) => {
+          const inSearch = e.target.closest('.home-search');
+          if (!inSearch) {
+            results.classList.remove('open');
+          }
+        });
+      }
+
       window.UI?.initStarsAndParticles();
       window.UI?.initClock();
       window.UI?.setActiveNav('/home');
@@ -308,6 +394,7 @@
       window.UI?.hideUsersNavForRecruiter?.();
       loadHomeStats();
       loadTasks();
+      initModuleSearch();
     </script>
   </body>
 </html>
