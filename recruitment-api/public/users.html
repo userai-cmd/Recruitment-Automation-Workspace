@@ -18,6 +18,11 @@
       th{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px}
       .tag{padding:2px 8px;border-radius:999px;font-size:11px;border:1px solid rgba(126,213,255,.3)}
       .ok{color:#95f7c0}.off{color:#ffb1b1}
+      .core-wrap{width:300px;height:118px;top:28px;opacity:.52}
+      .core-wrap::before,.core-wrap::after{width:96px;opacity:.5}
+      .core-eye .outer{inset:13px 26px;border-color:rgba(122,209,255,0.4)}
+      .core-eye .mid{inset:25px 82px;opacity:.82}
+      .hero-content{padding-top:118px}
       @media(max-width:980px){.formGrid{grid-template-columns:1fr 1fr}}
       @media(max-width:720px){.formGrid{grid-template-columns:1fr}}
     </style>
@@ -51,9 +56,12 @@
           </div>
         </aside>
         <section class="hero">
+          <div class="core-wrap" aria-hidden="true">
+            <div class="core-eye"><div class="outer"></div><div class="mid"></div></div>
+          </div>
           <div class="hero-content">
-            <div class="eyebrow">Admin panel</div>
-            <p class="subtitle" id="subline">Завантаження...</p>
+            <div class="eyebrow">SAT_RECRUT</div>
+            <p class="subtitle" id="subline" style="display:none">Завантаження...</p>
           </div>
         </section>
         <div class="panel">
