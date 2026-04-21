@@ -78,7 +78,7 @@ body::after{background:
 .theme-toggle:hover{border-color:rgba(123,207,255,0.44);box-shadow:0 0 14px rgba(40,167,255,0.14)}
 .top-nav > div:last-child{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap;min-width:0}
 .page-mini-title{
-  font-size:13px;
+  font-size:17px;
   font-weight:700;
   color:#cfe5ff;
   letter-spacing:.3px;
@@ -88,7 +88,7 @@ body::after{background:
   justify-self:start;
 }
 .top-nav > .page-mini-title{
-  margin-left:calc(var(--page-left-pad) - 20px);
+  margin-left:calc(var(--page-left-pad) + 28px);
 }
 .nav-clock{display:flex;flex-direction:column;align-items:flex-end;padding:6px 14px;border-radius:10px;background:rgba(0,12,35,0.7);
   border:1px solid rgba(0,150,255,0.2);flex-shrink:0}
