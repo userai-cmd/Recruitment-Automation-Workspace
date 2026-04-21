@@ -530,14 +530,16 @@ function exportCsv() {
   const rows = getFilteredSortedCandidates();
   const columns = ['fullName', 'email', 'phone', 'position', 'city', 'source', 'status', 'createdAt'];
   const header = ['ПІБ', 'Email', 'Телефон', 'Позиція', 'Місто', 'Джерело', 'Статус', 'Дата'];
+  const sep = ';';
   const esc = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
-  const lines = [header.map(esc).join(',')];
+  // Excel/Numbers in UA locale often expects semicolon-separated CSV.
+  const lines = [`sep=${sep}`, header.map(esc).join(sep)];
   for (const row of rows) {
     lines.push(
       columns
         .map((k) => (k === 'status' ? STATUS_LABELS[row.status] || row.status : k === 'createdAt' ? formatDate(row.createdAt) : row[k]))
         .map(esc)
-        .join(','),
+        .join(sep),
     );
   }
   const blob = new Blob([`\uFEFF${lines.join('\n')}`], { type: 'text/csv;charset=utf-8;' });
