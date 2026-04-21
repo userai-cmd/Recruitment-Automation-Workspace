@@ -65,7 +65,7 @@ body::after{background:
 .nav-links a{text-decoration:none;color:#d9eeff;font-size:13px;font-weight:700;padding:11px 16px;border-radius:12px;border:1px solid rgba(103,181,255,0.14);background:rgba(5,14,26,0.54);transition:.25s ease}
 .nav-links a:hover,.nav-links a.active{border-color:rgba(123,207,255,0.44);background:linear-gradient(180deg,rgba(16,54,100,0.74),rgba(8,24,48,0.82));
   box-shadow:0 0 18px rgba(40,167,255,0.16);color:#fff}
-.left-nav{position:fixed;top:0;left:0;width:240px;z-index:3;height:100vh;padding:10px 10px 14px;border-right:1px solid rgba(103,181,255,0.14);background:linear-gradient(180deg,rgba(7,16,31,0.82),rgba(4,12,24,0.72))}
+.left-nav{position:fixed;top:0;left:0;width:240px;z-index:3;height:100vh;padding:18px 10px 14px;border-right:1px solid rgba(103,181,255,0.14);background:linear-gradient(180deg,rgba(7,16,31,0.82),rgba(4,12,24,0.72))}
 .left-nav-title{font-size:13px;font-weight:700;color:#ffd94a;letter-spacing:.5px;padding:8px 14px;border-bottom:1px solid rgba(103,181,255,0.14);margin-bottom:10px;min-height:56px;display:flex;flex-direction:column;justify-content:center;line-height:1.1;
   text-shadow:0 0 8px rgba(255, 198, 0, 0.45),0 0 18px rgba(255, 170, 0, 0.28)}
 .left-nav-title .sat-main{font-size:19px;font-weight:900;line-height:1;color:#ffe15e}
