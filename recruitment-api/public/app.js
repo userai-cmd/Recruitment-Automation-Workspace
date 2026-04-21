@@ -535,6 +535,94 @@ function bindDrawer() {
   });
 }
 
+/* ── PHONE MASK (+380 prefix, 9 digits) ───────────────────────── */
+function bindPhoneMask(input) {
+  const PREFIX = '+380';
+
+  function getDigits() {
+    const after = input.value.startsWith(PREFIX)
+      ? input.value.slice(PREFIX.length)
+      : input.value.replace(/^\+?3?8?0?/, '');
+    return after.replace(/\D/g, '').slice(0, 9);
+  }
+
+  function updateHint(digits) {
+    const hint = document.getElementById('phoneHint');
+    const counter = document.getElementById('phoneCounter');
+    if (counter) counter.textContent = `${digits.length}/9`;
+    if (!hint) return;
+    if (digits.length === 0) {
+      hint.textContent = 'Введіть 9 цифр оператора після +380';
+      hint.dataset.state = 'neutral';
+    } else if (digits.length < 9) {
+      hint.textContent = `Залишилось ${9 - digits.length} цифр`;
+      hint.dataset.state = 'warn';
+    } else {
+      hint.textContent = '✓ Номер коректний';
+      hint.dataset.state = 'ok';
+    }
+  }
+
+  input.addEventListener('focus', () => {
+    input.style.borderColor = '';
+    input.style.boxShadow = '';
+    if (!input.value) {
+      input.value = PREFIX;
+    }
+    setTimeout(() => {
+      const pos = input.value.length;
+      input.setSelectionRange(pos, pos);
+    }, 0);
+  });
+
+  input.addEventListener('keydown', (e) => {
+    const s = input.selectionStart;
+    // Prevent deleting the +380 prefix
+    if (e.key === 'Backspace' && s <= PREFIX.length && s === input.selectionEnd) {
+      e.preventDefault();
+    }
+    // Redirect any printable key typed inside the prefix to end of input
+    if (s < PREFIX.length && e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
+      e.preventDefault();
+      input.setSelectionRange(input.value.length, input.value.length);
+    }
+  });
+
+  input.addEventListener('input', () => {
+    const digits = getDigits();
+    input.value = PREFIX + digits;
+    const pos = input.value.length;
+    input.setSelectionRange(pos, pos);
+    updateHint(digits);
+  });
+
+  input.addEventListener('blur', () => {
+    const digits = getDigits();
+    if (!digits) {
+      input.value = '';
+      updateHint('');
+      input.style.borderColor = '';
+      input.style.boxShadow = '';
+      return;
+    }
+    if (digits.length < 9) {
+      input.style.borderColor = 'rgba(255,80,80,.55)';
+      input.style.boxShadow = '0 0 0 3px rgba(255,80,80,.12)';
+      const hint = document.getElementById('phoneHint');
+      if (hint) {
+        hint.textContent = `⚠ Неповний номер — введено ${digits.length} з 9 цифр`;
+        hint.dataset.state = 'error';
+      }
+    } else {
+      input.style.borderColor = 'rgba(95,228,128,.45)';
+      input.style.boxShadow = '0 0 0 3px rgba(95,228,128,.1)';
+    }
+  });
+
+  // Initial state hint
+  updateHint(getDigits());
+}
+
 function extractApiError(error, fallback) {
   const message = String(error?.message || fallback || '');
   const match = message.match(/:\s*(\{.*\})$/);
@@ -1302,6 +1390,8 @@ function bindCandidatePage() {
   const dupWarn = document.getElementById('phoneDupWarn');
   let dupConfirmed = false;
 
+  if (phoneInput) bindPhoneMask(phoneInput);
+
   if (phoneInput && dupWarn) {
     phoneInput.addEventListener('blur', async () => {
       dupWarn.style.display = 'none';
@@ -1332,6 +1422,22 @@ function bindCandidatePage() {
     if (err) err.style.display = 'none';
 
     try {
+      // Phone format validation: must be +380 + exactly 9 digits
+      if (phoneInput && phoneInput.value) {
+        const phoneSuffix = phoneInput.value.startsWith('+380')
+          ? phoneInput.value.slice(4).replace(/\D/g, '')
+          : phoneInput.value.replace(/\D/g, '').replace(/^380/, '');
+        if (phoneSuffix.length !== 9) {
+          const hint = document.getElementById('phoneHint');
+          if (hint) { hint.textContent = `⚠ Потрібно 9 цифр після +380 (зараз: ${phoneSuffix.length})`; hint.dataset.state = 'error'; }
+          phoneInput.style.borderColor = 'rgba(255,80,80,.55)';
+          phoneInput.style.boxShadow = '0 0 0 3px rgba(255,80,80,.12)';
+          phoneInput.focus();
+          if (err) { err.textContent = 'Невірний формат телефону. Потрібно +380 та 9 цифр.'; err.style.display = 'block'; }
+          return;
+        }
+      }
+
       if (!dupConfirmed && phoneInput) {
         const dup = await checkPhoneDuplicate(phoneInput.value);
         if (dup) {
