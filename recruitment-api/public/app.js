@@ -530,10 +530,10 @@ function exportCsv() {
   const rows = getFilteredSortedCandidates();
   const columns = ['fullName', 'email', 'phone', 'position', 'city', 'source', 'status', 'createdAt'];
   const header = ['ПІБ', 'Email', 'Телефон', 'Позиція', 'Місто', 'Джерело', 'Статус', 'Дата'];
-  const sep = ';';
+  const decimalSample = (1.1).toLocaleString('uk-UA');
+  const sep = decimalSample.includes(',') ? ';' : ',';
   const esc = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
-  // Excel/Numbers in UA locale often expects semicolon-separated CSV.
-  const lines = [`sep=${sep}`, header.map(esc).join(sep)];
+  const lines = [header.map(esc).join(sep)];
   for (const row of rows) {
     lines.push(
       columns
@@ -542,7 +542,9 @@ function exportCsv() {
         .join(sep),
     );
   }
-  const blob = new Blob([`\uFEFF${lines.join('\n')}`], { type: 'text/csv;charset=utf-8;' });
+  // UTF-8 BOM keeps Cyrillic readable in Excel/Numbers while staying portable for Google Sheets.
+  const content = `\uFEFF${lines.join('\r\n')}`;
+  const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
   const link = document.createElement('a');
   link.href = URL.createObjectURL(blob);
   link.download = `candidates_${new Date().toISOString().slice(0, 10)}.csv`;
