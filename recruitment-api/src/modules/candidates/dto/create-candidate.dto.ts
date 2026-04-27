@@ -1,7 +1,9 @@
-import { IsEmail, IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsEmail, IsOptional, IsString, IsUUID, Matches, MinLength } from 'class-validator';
 
 export class CreateCandidateDto {
   @IsString()
+  @MinLength(3)
+  @Matches(/\S+\s+\S+/, { message: 'fullName must include first name and last name' })
   fullName!: string;
 
   @IsString()

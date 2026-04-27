@@ -859,6 +859,20 @@ function toLocalDatetimeInputValue(date) {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
+function normalizePersonFullName(input) {
+  const compact = String(input || '').trim().replace(/\s+/g, ' ');
+  if (!compact) return '';
+  return compact
+    .split(' ')
+    .map((part) =>
+      part
+        .split('-')
+        .map((sub) => (sub ? sub.charAt(0).toUpperCase() + sub.slice(1).toLowerCase() : sub))
+        .join('-'),
+    )
+    .join(' ');
+}
+
 async function quickCreateTask(candidate) {
   const title = prompt('Назва задачі', `Зв'язатися з кандидатом: ${candidate.fullName}`);
   if (title === null) return;
@@ -1652,6 +1666,12 @@ function bindCandidatePage() {
   let dupConfirmed = false;
 
   if (phoneInput) bindPhoneMask(phoneInput);
+  const fullNameInput = document.getElementById('pFullName');
+  if (fullNameInput) {
+    fullNameInput.addEventListener('blur', () => {
+      fullNameInput.value = normalizePersonFullName(fullNameInput.value);
+    });
+  }
 
   if (phoneInput && dupWarn) {
     phoneInput.addEventListener('blur', async () => {
@@ -1683,6 +1703,25 @@ function bindCandidatePage() {
     if (err) err.style.display = 'none';
 
     try {
+      const normalizedFullName = normalizePersonFullName(fullNameInput?.value);
+      if (normalizedFullName.split(' ').length < 2) {
+        if (err) {
+          err.textContent = "Вкажіть ПІБ у форматі: Ім'я Прізвище.";
+          err.style.display = 'block';
+        }
+        if (fullNameInput) {
+          fullNameInput.focus();
+          fullNameInput.style.borderColor = 'rgba(255,80,80,.55)';
+          fullNameInput.style.boxShadow = '0 0 0 3px rgba(255,80,80,.12)';
+        }
+        return;
+      }
+      if (fullNameInput) {
+        fullNameInput.value = normalizedFullName;
+        fullNameInput.style.borderColor = '';
+        fullNameInput.style.boxShadow = '';
+      }
+
       // Phone format validation: must be +380 + exactly 9 digits
       if (phoneInput && phoneInput.value) {
         const phoneSuffix = phoneInput.value.startsWith('+380')
@@ -1720,7 +1759,7 @@ function bindCandidatePage() {
         assignedRecruiterId = me.id;
       }
       const payload = {
-        fullName: document.getElementById('pFullName').value,
+        fullName: normalizedFullName,
         phone: document.getElementById('pPhone').value,
         email: document.getElementById('pEmail').value || undefined,
         position: document.getElementById('pPosition').value || undefined,
