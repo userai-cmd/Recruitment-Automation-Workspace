@@ -43,6 +43,7 @@ let dashboardCandidates = [];
 let dashboardUser = null;
 let drawerCandidate = null;
 let selectedStatus = 'all';
+let selectedChecklist = 'all';
 let selectedPosition = 'all';
 let selectedRecruiterId = '';
 let sortBy = 'createdAt:desc';
@@ -167,8 +168,19 @@ function passFilter(cand) {
   }
 
   if (selectedStatus !== 'all' && cand.status !== selectedStatus) return false;
+  const progress = getChecklistProgress(cand);
+  const isDone = progress.total > 0 ? progress.done === progress.total : true;
+  if (selectedChecklist === 'open' && isDone) return false;
+  if (selectedChecklist === 'done' && !isDone) return false;
   if (selectedPosition !== 'all' && (cand.position || '') !== selectedPosition) return false;
   return true;
+}
+
+function getChecklistProgress(cand) {
+  const template = CHECKLIST_TEMPLATES[cand.status] || [];
+  const items = getChecklistItemsByStatus(cand, cand.status);
+  const done = template.reduce((acc, item) => acc + (items[item.id] ? 1 : 0), 0);
+  return { done, total: template.length };
 }
 
 function compareCandidates(a, b) {
@@ -837,6 +849,9 @@ function renderCandidatesTable(candidates) {
 
   for (const cand of candidates) {
     const tr = document.createElement('tr');
+    const progress = getChecklistProgress(cand);
+    const isChecklistDone = progress.total > 0 ? progress.done === progress.total : true;
+    if (!isChecklistDone) tr.classList.add('checklist-open');
 
     const nameTd = document.createElement('td');
     nameTd.className = 'name-clickable';
@@ -914,6 +929,12 @@ function renderCandidatesTable(candidates) {
       );
     });
     statusTd.appendChild(select);
+    if (progress.total > 0) {
+      const progressEl = document.createElement('div');
+      progressEl.className = 'checklist-progress';
+      progressEl.textContent = `Чек-лист: ${progress.done}/${progress.total}`;
+      statusTd.appendChild(progressEl);
+    }
 
     const actionTd = document.createElement('td');
     const editBtn = document.createElement('button');
@@ -1107,10 +1128,14 @@ function createKanbanCard(cand) {
   card.className = 'kanban-card';
   card.draggable = true;
   card.dataset.id = cand.id;
+  const progress = getChecklistProgress(cand);
+  const isChecklistDone = progress.total > 0 ? progress.done === progress.total : true;
+  if (!isChecklistDone) card.classList.add('checklist-open');
 
   const lines = [
     cand.position ? `<div class="kanban-card-meta">${cand.position}</div>` : '',
     cand.city     ? `<div class="kanban-card-meta">${cand.city}</div>` : '',
+    progress.total > 0 ? `<div class="kanban-card-meta" style="color:#ffd8a8;font-weight:800">Чек-лист: ${progress.done}/${progress.total}</div>` : '',
   ].join('');
 
   card.innerHTML = `
@@ -1361,6 +1386,14 @@ function bindDashboardFilters() {
   if (statusFilter) {
     statusFilter.addEventListener('change', () => {
       selectedStatus = statusFilter.value || 'all';
+      currentPage = 1;
+      refreshCandidatesView();
+    });
+  }
+  const checklistFilter = document.getElementById('checklistFilter');
+  if (checklistFilter) {
+    checklistFilter.addEventListener('change', () => {
+      selectedChecklist = checklistFilter.value || 'all';
       currentPage = 1;
       refreshCandidatesView();
     });
