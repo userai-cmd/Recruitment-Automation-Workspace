@@ -1,9 +1,10 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateCandidateDto } from './dto/create-candidate.dto';
 import { ChangeStatusDto } from './dto/change-status.dto';
 import { UpdateCandidateDto } from './dto/update-candidate.dto';
 import { JwtUser } from '../../common/decorators/current-user.decorator';
+import { UpdateChecklistDto } from './dto/update-checklist.dto';
 
 const STATUS_LABELS: Record<string, string> = {
   new: 'Новий',
@@ -16,6 +17,33 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 const STATUS_ORDER = ['new', 'contacted', 'interview', 'offer', 'hired', 'sb_failed', 'rejected'];
+const CHECKLIST_REQUIRED_BY_STATUS: Record<string, Array<{ id: string; label: string }>> = {
+  new: [
+    { id: 'profileFilled', label: "Заповнено ПІБ, телефон, позицію, місто, джерело" },
+    { id: 'duplicatesChecked', label: 'Перевірено дублікати в базі' },
+    { id: 'firstCommentAdded', label: 'Додано початковий коментар' },
+  ],
+  contacted: [
+    { id: 'firstContactDone', label: 'Проведено первинний контакт' },
+    { id: 'conditionsClarified', label: 'Уточнено графік/умови/очікування' },
+    { id: 'contactResultLogged', label: 'Зафіксовано результат контакту' },
+  ],
+  interview: [
+    { id: 'interviewScheduled', label: 'Узгоджено дату і час співбесіди' },
+    { id: 'instructionsSent', label: 'Надіслано інструкції кандидату' },
+    { id: 'feedbackLogged', label: 'Після співбесіди внесено фідбек' },
+  ],
+  offer: [
+    { id: 'offerTermsAgreed', label: 'Узгоджено умови оферу' },
+    { id: 'offerConfirmed', label: 'Кандидат підтвердив офер' },
+    { id: 'documentsDeadlineSet', label: 'Узгоджено дедлайн по документах' },
+  ],
+  hired: [
+    { id: 'docsReceived', label: 'Отримано пакет документів' },
+    { id: 'startDateConfirmed', label: 'Підтверджено дату виходу' },
+    { id: 'handoffCompleted', label: 'Передано в HR/оформлення' },
+  ],
+};
 const KPI_PERIODS = ['day', 'week', 'month', 'quarter', 'year'] as const;
 type KpiPeriod = (typeof KPI_PERIODS)[number];
 const REFERRAL_SOURCES = new Set(['рекомендація', 'referral', 'recommendation']);
@@ -189,6 +217,21 @@ export class CandidatesService {
 
   async changeStatus(id: string, dto: ChangeStatusDto, actor: JwtUser) {
     const candidate = await this.findOne(id, actor);
+    const requiredItems = CHECKLIST_REQUIRED_BY_STATUS[candidate.status] || [];
+    if (requiredItems.length > 0) {
+      const checklistByStatus = ((candidate as any).checklistData?.byStatus ?? {}) as Record<string, Record<string, boolean>>;
+      const currentStatusChecks = checklistByStatus[candidate.status] ?? {};
+      const missingItems = requiredItems
+        .filter((item) => !currentStatusChecks[item.id])
+        .map((item) => item.label);
+      if (missingItems.length > 0) {
+        throw new BadRequestException({
+          message: 'Checklist incomplete',
+          status: candidate.status,
+          missingItems,
+        });
+      }
+    }
 
     return this.prisma.$transaction(async (tx) => {
       const updated = await tx.candidate.update({
@@ -248,6 +291,46 @@ export class CandidatesService {
           entityId: id,
           action: 'update',
           payload: dto as any,
+          actorUserId: actor.id,
+        },
+      });
+
+      return updated;
+    });
+  }
+
+  async updateChecklist(id: string, dto: UpdateChecklistDto, actor: JwtUser) {
+    const candidate = await this.findOne(id, actor);
+    const currentChecklist = (candidate as any).checklistData ?? {};
+    const byStatus = (currentChecklist.byStatus ?? {}) as Record<string, Record<string, boolean>>;
+    const nextChecklist = {
+      ...currentChecklist,
+      byStatus: {
+        ...byStatus,
+        [dto.status]: dto.items,
+      },
+      updatedAt: new Date().toISOString(),
+      updatedByUserId: actor.id,
+      note: dto.note ?? null,
+    };
+
+    return this.prisma.$transaction(async (tx) => {
+      const updated = await tx.candidate.update({
+        where: { id },
+        data: {
+          checklistData: nextChecklist as any,
+        } as any,
+      });
+
+      await tx.activityLog.create({
+        data: {
+          entityType: 'candidate',
+          entityId: id,
+          action: 'checklist_update',
+          payload: {
+            status: dto.status,
+            items: dto.items,
+          } as any,
           actorUserId: actor.id,
         },
       });

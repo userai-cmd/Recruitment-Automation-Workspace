@@ -11,6 +11,33 @@ const STATUS_LABELS = {
   sb_failed: 'Не пройшов СБ',
   rejected: 'Відхилений',
 };
+const CHECKLIST_TEMPLATES = {
+  new: [
+    { id: 'profileFilled', label: "Заповнено ПІБ, телефон, позицію, місто, джерело" },
+    { id: 'duplicatesChecked', label: 'Перевірено дублікати в базі' },
+    { id: 'firstCommentAdded', label: 'Додано початковий коментар' },
+  ],
+  contacted: [
+    { id: 'firstContactDone', label: 'Проведено первинний контакт' },
+    { id: 'conditionsClarified', label: 'Уточнено графік/умови/очікування' },
+    { id: 'contactResultLogged', label: 'Зафіксовано результат контакту' },
+  ],
+  interview: [
+    { id: 'interviewScheduled', label: 'Узгоджено дату і час співбесіди' },
+    { id: 'instructionsSent', label: 'Надіслано інструкції кандидату' },
+    { id: 'feedbackLogged', label: 'Після співбесіди внесено фідбек' },
+  ],
+  offer: [
+    { id: 'offerTermsAgreed', label: 'Узгоджено умови оферу' },
+    { id: 'offerConfirmed', label: 'Кандидат підтвердив офер' },
+    { id: 'documentsDeadlineSet', label: 'Узгоджено дедлайн по документах' },
+  ],
+  hired: [
+    { id: 'docsReceived', label: 'Отримано пакет документів' },
+    { id: 'startDateConfirmed', label: 'Підтверджено дату виходу' },
+    { id: 'handoffCompleted', label: 'Передано в HR/оформлення' },
+  ],
+};
 let searchTerm = '';
 let dashboardCandidates = [];
 let dashboardUser = null;
@@ -391,9 +418,101 @@ function openDrawer(cand) {
     statusSel.value = cand.status || 'new';
     statusSel.className = `statusSelect status-${cand.status}`;
   }
+  renderDrawerChecklist(cand);
 
   document.getElementById('drawerOverlay')?.classList.add('open');
   document.getElementById('drawer')?.classList.add('open');
+}
+
+function getChecklistItemsByStatus(cand, status) {
+  return cand?.checklistData?.byStatus?.[status] || {};
+}
+
+function setDrawerChecklistMeta(total, done) {
+  const metaEl = document.getElementById('drawerChecklistMeta');
+  if (!metaEl) return;
+  if (!total) {
+    metaEl.textContent = 'Для цього статусу чек-лист поки не задано.';
+    return;
+  }
+  metaEl.textContent = `Виконано: ${done}/${total}`;
+}
+
+function renderDrawerChecklist(cand) {
+  const wrap = document.getElementById('drawerChecklist');
+  if (!wrap || !cand) return;
+  const template = CHECKLIST_TEMPLATES[cand.status] || [];
+  const currentItems = getChecklistItemsByStatus(cand, cand.status);
+  wrap.innerHTML = '';
+
+  if (!template.length) {
+    setDrawerChecklistMeta(0, 0);
+    return;
+  }
+
+  const done = template.reduce((acc, item) => acc + (currentItems[item.id] ? 1 : 0), 0);
+  setDrawerChecklistMeta(template.length, done);
+
+  for (const item of template) {
+    const line = document.createElement('label');
+    line.className = 'checklist-item';
+
+    const input = document.createElement('input');
+    input.type = 'checkbox';
+    input.checked = Boolean(currentItems[item.id]);
+
+    const title = document.createElement('span');
+    title.textContent = item.label;
+
+    input.addEventListener('change', async () => {
+      const prev = Boolean(currentItems[item.id]);
+      const nextItems = {
+        ...currentItems,
+        [item.id]: input.checked,
+      };
+
+      cand.checklistData = {
+        ...(cand.checklistData || {}),
+        byStatus: {
+          ...(cand.checklistData?.byStatus || {}),
+          [cand.status]: nextItems,
+        },
+      };
+      const nextDone = template.reduce((acc, t) => acc + (nextItems[t.id] ? 1 : 0), 0);
+      setDrawerChecklistMeta(template.length, nextDone);
+
+      try {
+        const updated = await api(`/candidates/${cand.id}/checklist`, {
+          method: 'PATCH',
+          body: JSON.stringify({
+            status: cand.status,
+            items: nextItems,
+          }),
+        });
+        if (updated?.checklistData) cand.checklistData = updated.checklistData;
+      } catch (e) {
+        input.checked = prev;
+        const rollbackItems = {
+          ...nextItems,
+          [item.id]: prev,
+        };
+        cand.checklistData = {
+          ...(cand.checklistData || {}),
+          byStatus: {
+            ...(cand.checklistData?.byStatus || {}),
+            [cand.status]: rollbackItems,
+          },
+        };
+        const rollbackDone = template.reduce((acc, t) => acc + (rollbackItems[t.id] ? 1 : 0), 0);
+        setDrawerChecklistMeta(template.length, rollbackDone);
+        showActionError(e, 'Не вдалося зберегти чек-лист');
+      }
+    });
+
+    line.appendChild(input);
+    line.appendChild(title);
+    wrap.appendChild(line);
+  }
 }
 
 function closeDrawer() {
@@ -422,6 +541,7 @@ function bindDrawer() {
 
       drawerStatus.className = `statusSelect status-${next}`;
       cand.status = next;
+      renderDrawerChecklist(cand);
       const inList = dashboardCandidates.find((c) => c.id === cand.id);
       if (inList) inList.status = next;
 
@@ -434,6 +554,7 @@ function bindDrawer() {
         drawerStatus.value = prev;
         drawerStatus.className = `statusSelect status-${prev}`;
         cand.status = prev;
+        renderDrawerChecklist(cand);
         if (inList) inList.status = prev;
         showActionError(e, 'Не вдалося змінити статус');
         return;
@@ -453,6 +574,7 @@ function bindDrawer() {
               drawerStatus.value = prev;
               drawerStatus.className = `statusSelect status-${prev}`;
             }
+            renderDrawerChecklist(cand);
             refreshCandidatesView();
           } catch (err) { showActionError(err, 'Не вдалося скасувати'); }
         },

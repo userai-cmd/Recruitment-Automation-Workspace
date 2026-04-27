@@ -5,6 +5,7 @@ import { CandidatesService } from './candidates.service';
 import { ChangeStatusDto } from './dto/change-status.dto';
 import { CreateCandidateDto } from './dto/create-candidate.dto';
 import { UpdateCandidateDto } from './dto/update-candidate.dto';
+import { UpdateChecklistDto } from './dto/update-checklist.dto';
 
 @UseGuards(JwtAuthGuard)
 @Controller('candidates')
@@ -71,6 +72,15 @@ export class CandidatesController {
     @CurrentUser() user: JwtUser,
   ) {
     return this.candidatesService.changeStatus(id, dto, user);
+  }
+
+  @Patch(':id/checklist')
+  updateChecklist(
+    @Param('id') id: string,
+    @Body() dto: UpdateChecklistDto,
+    @CurrentUser() user: JwtUser,
+  ) {
+    return this.candidatesService.updateChecklist(id, dto, user);
   }
 
   @Delete(':id')

@@ -80,6 +80,7 @@ model Candidate {
   lastContactAt       DateTime?                @map("last_contact_at") @db.Timestamptz(6)
   nextFollowUpAt      DateTime?                @map("next_follow_up_at") @db.Timestamptz(6)
   comment             String?
+  checklistData       Json?                    @map("checklist_data")
   isDeleted           Boolean                  @default(false) @map("is_deleted")
   createdAt           DateTime                 @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt           DateTime                 @updatedAt @map("updated_at") @db.Timestamptz(6)
