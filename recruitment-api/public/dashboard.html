@@ -95,7 +95,18 @@
       .checklist-item{display:flex;gap:8px;align-items:flex-start;font-size:13px;color:#d9eeff}
       .checklist-item input{margin-top:2px}
       .checklist-meta{font-size:11px;color:var(--muted)}
-      .checklist-progress{margin-top:6px;font-size:11px;color:#ffd8a8;font-weight:800;letter-spacing:.2px}
+      .checklist-progress{
+        display:inline-block;
+        margin-top:6px;
+        padding:2px 8px;
+        border-radius:999px;
+        border:1px solid rgba(176,102,15,0.35);
+        background:rgba(255,186,87,0.2);
+        font-size:11px;
+        color:#6b3b00;
+        font-weight:900;
+        letter-spacing:.2px;
+      }
 
       @media(max-width:1300px){.controls{grid-template-columns:1fr 1fr 1fr}}
       @media(max-width:1180px){.kpiRow{grid-template-columns:repeat(2,minmax(0,1fr))}.controls{grid-template-columns:1fr 1fr}}
