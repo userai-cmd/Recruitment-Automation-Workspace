@@ -13,12 +13,21 @@ export class AuthService {
   ) {}
 
   async login(dto: LoginDto) {
-    const user = await this.prisma.user.findUnique({ where: { email: dto.email } });
+    const normalizedEmail = dto.email.trim().toLowerCase();
+    const user = await this.prisma.user.findUnique({ where: { email: normalizedEmail } });
     if (!user || !user.isActive) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const isValid = await bcrypt.compare(dto.password, user.passwordHash);
+    const rawPassword = dto.password;
+    let isValid = await bcrypt.compare(rawPassword, user.passwordHash);
+    // Fallback for copy-pasted passwords with accidental leading/trailing spaces.
+    if (!isValid) {
+      const trimmedPassword = rawPassword.trim();
+      if (trimmedPassword !== rawPassword) {
+        isValid = await bcrypt.compare(trimmedPassword, user.passwordHash);
+      }
+    }
     if (!isValid) {
       throw new UnauthorizedException('Invalid credentials');
     }
