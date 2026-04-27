@@ -183,6 +183,68 @@ function getChecklistProgress(cand) {
   return { done, total: template.length };
 }
 
+function renderAdminChecklistBoard(rows) {
+  const board = document.getElementById('adminChecklistBoard');
+  const list = document.getElementById('adminChecklistBoardList');
+  if (!board || !list) return;
+  if (!rows.length) {
+    board.style.display = 'none';
+    list.innerHTML = '';
+    return;
+  }
+  board.style.display = 'block';
+  list.innerHTML = '';
+  for (const row of rows) {
+    const chip = document.createElement('div');
+    chip.className = 'mini-chip';
+    chip.innerHTML = `
+      <div class="mini-chip-name">${row.name}</div>
+      <div class="mini-chip-meta">Кандидатів у чек-листі: ${row.candidatesInScope}</div>
+      <div class="mini-chip-progress">${row.percent}% (${row.completed}/${row.candidatesInScope || 0})</div>
+    `;
+    list.appendChild(chip);
+  }
+}
+
+async function loadAdminChecklistBoard() {
+  if (!dashboardUser || dashboardUser.role !== 'admin') {
+    renderAdminChecklistBoard([]);
+    return;
+  }
+
+  const users = await api('/auth/users');
+  const recruiters = users.filter((u) => u.role === 'recruiter' && u.isActive);
+  if (!recruiters.length) {
+    renderAdminChecklistBoard([]);
+    return;
+  }
+
+  const byRecruiter = await Promise.all(
+    recruiters.map(async (recruiter) => {
+      const chunks = await Promise.all(
+        STATUSES.map((status) => api(`/candidates?status=${encodeURIComponent(status)}&recruiterId=${encodeURIComponent(recruiter.id)}`)),
+      );
+      const candidates = chunks.flat();
+      const scoped = candidates.filter((c) => getChecklistProgress(c).total > 0);
+      const completed = scoped.filter((c) => {
+        const p = getChecklistProgress(c);
+        return p.done === p.total;
+      }).length;
+      const percent = scoped.length ? Math.round((completed / scoped.length) * 100) : 0;
+      return {
+        recruiterId: recruiter.id,
+        name: recruiter.fullName || recruiter.email,
+        candidatesInScope: scoped.length,
+        completed,
+        percent,
+      };
+    }),
+  );
+
+  byRecruiter.sort((a, b) => b.percent - a.percent || b.candidatesInScope - a.candidatesInScope);
+  renderAdminChecklistBoard(byRecruiter);
+}
+
 function compareCandidates(a, b) {
   const [field, direction] = sortBy.split(':');
   const dir = direction === 'asc' ? 1 : -1;
@@ -1337,6 +1399,7 @@ async function loadCandidatesTable() {
     recruiterFilter.style.display = 'none';
     selectedRecruiterId = dashboardUser.id;
   }
+  await loadAdminChecklistBoard();
 
   const loading = document.getElementById('loading');
   if (loading) loading.style.display = 'block';
