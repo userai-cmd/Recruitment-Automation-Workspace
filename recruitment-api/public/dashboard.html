@@ -18,6 +18,21 @@
       .mini-chip-name{font-size:12px;font-weight:800;color:#e9f6ff}
       .mini-chip-meta{font-size:11px;color:var(--muted);margin-top:2px}
       .mini-chip-progress{font-size:12px;color:#ffd8a8;font-weight:900;margin-top:4px}
+      .onboarding-tip{
+        position:fixed;right:18px;bottom:18px;z-index:9998;width:min(360px,92vw);
+        border-radius:14px;padding:12px 14px;
+        border:1px solid rgba(118,196,255,.35);
+        background:linear-gradient(180deg,rgba(8,20,38,.96),rgba(5,14,28,.96));
+        box-shadow:0 16px 35px rgba(0,0,0,.34);
+        display:none;
+      }
+      .onboarding-tip-title{font-size:12px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+      .onboarding-tip-text{font-size:13px;line-height:1.45;color:var(--text)}
+      .onboarding-tip-actions{margin-top:10px;display:flex;justify-content:flex-end}
+      .onboarding-tip-btn{
+        border:none;border-radius:10px;padding:8px 12px;font-size:12px;font-weight:900;cursor:pointer;color:#fff;
+        background:linear-gradient(180deg,rgba(40,167,255,.98),rgba(20,102,214,.96));
+      }
 
       .listMeta{margin:-4px 0 14px;color:var(--muted);font-size:14px}
       .controls{display:grid;grid-template-columns:1fr 180px 220px 200px 220px 200px auto;align-items:center;gap:12px;margin-bottom:12px}
@@ -339,6 +354,16 @@
         <button id="drawerArchiveBtn" class="drawer-btn danger" type="button">🗑 Архів</button>
       </div>
     </aside>
+    <div id="checklistOnboardingTip" class="onboarding-tip" role="dialog" aria-live="polite">
+      <div class="onboarding-tip-title">Підказка по чек-листу</div>
+      <div class="onboarding-tip-text">
+        Відмічайте пункти в блоці “Чек-лист етапу”.<br />
+        Поки чек-лист етапу не завершений, перевести кандидата в наступний статус не вийде.
+      </div>
+      <div class="onboarding-tip-actions">
+        <button id="checklistOnboardingOkBtn" class="onboarding-tip-btn" type="button">Зрозуміло</button>
+      </div>
+    </div>
 
     <script src="/ui.js?v=202604211900"></script>
     <script src="/app.js?v=202604211900"></script>

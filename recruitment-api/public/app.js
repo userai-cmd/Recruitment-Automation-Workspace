@@ -49,6 +49,7 @@ let selectedRecruiterId = '';
 let sortBy = 'createdAt:desc';
 let currentPage = 1;
 const PAGE_SIZE = 10;
+const CHECKLIST_ONBOARDING_SEEN_KEY = 'checklistOnboardingSeenV1';
 
 function getToken() {
   return localStorage.getItem('accessToken') || '';
@@ -1420,8 +1421,29 @@ async function loadCandidatesTable() {
   updatePositionFilter(dashboardCandidates);
   currentPage = 1;
   refreshCandidatesView();
+  maybeShowChecklistOnboarding();
 
   if (loading) loading.style.display = 'none';
+}
+
+function maybeShowChecklistOnboarding() {
+  const isDashboard = Boolean(document.getElementById('candidatesBody'));
+  if (!isDashboard) return;
+  if (!dashboardUser || dashboardUser.role !== 'recruiter') return;
+  if (localStorage.getItem(CHECKLIST_ONBOARDING_SEEN_KEY) === '1') return;
+
+  const tip = document.getElementById('checklistOnboardingTip');
+  const okBtn = document.getElementById('checklistOnboardingOkBtn');
+  if (!tip || !okBtn) return;
+
+  tip.style.display = 'block';
+  if (!okBtn.dataset.bound) {
+    okBtn.dataset.bound = '1';
+    okBtn.addEventListener('click', () => {
+      localStorage.setItem(CHECKLIST_ONBOARDING_SEEN_KEY, '1');
+      tip.style.display = 'none';
+    });
+  }
 }
 
 function bindLogout() {
