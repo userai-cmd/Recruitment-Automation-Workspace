@@ -11,33 +11,7 @@ const STATUS_LABELS = {
   sb_failed: 'Не пройшов СБ',
   rejected: 'Відхилений',
 };
-const CHECKLIST_TEMPLATES = {
-  new: [
-    { id: 'profileFilled', label: "Заповнено ПІБ, телефон, позицію, місто, джерело" },
-    { id: 'duplicatesChecked', label: 'Перевірено дублікати в базі' },
-    { id: 'firstCommentAdded', label: 'Додано початковий коментар' },
-  ],
-  contacted: [
-    { id: 'firstContactDone', label: 'Проведено первинний контакт' },
-    { id: 'conditionsClarified', label: 'Уточнено графік/умови/очікування' },
-    { id: 'contactResultLogged', label: 'Зафіксовано результат контакту' },
-  ],
-  interview: [
-    { id: 'interviewScheduled', label: 'Узгоджено дату і час співбесіди' },
-    { id: 'instructionsSent', label: 'Надіслано інструкції кандидату' },
-    { id: 'feedbackLogged', label: 'Після співбесіди внесено фідбек' },
-  ],
-  offer: [
-    { id: 'offerTermsAgreed', label: 'Узгоджено умови оферу' },
-    { id: 'offerConfirmed', label: 'Кандидат підтвердив офер' },
-    { id: 'documentsDeadlineSet', label: 'Узгоджено дедлайн по документах' },
-  ],
-  hired: [
-    { id: 'docsReceived', label: 'Отримано пакет документів' },
-    { id: 'startDateConfirmed', label: 'Підтверджено дату виходу' },
-    { id: 'handoffCompleted', label: 'Передано в HR/оформлення' },
-  ],
-};
+let CHECKLIST_TEMPLATES = {};
 let searchTerm = '';
 let dashboardCandidates = [];
 let dashboardUser = null;
@@ -50,6 +24,7 @@ let sortBy = 'createdAt:desc';
 let currentPage = 1;
 const PAGE_SIZE = 10;
 const CHECKLIST_ONBOARDING_SEEN_KEY = 'checklistOnboardingSeenV1';
+let checklistTemplatesLoaded = false;
 
 function getToken() {
   return localStorage.getItem('accessToken') || '';
@@ -182,6 +157,15 @@ function getChecklistProgress(cand) {
   const items = getChecklistItemsByStatus(cand, cand.status);
   const done = template.reduce((acc, item) => acc + (items[item.id] ? 1 : 0), 0);
   return { done, total: template.length };
+}
+
+async function ensureChecklistTemplatesLoaded() {
+  if (checklistTemplatesLoaded) return;
+  const data = await api('/candidates/checklist/template');
+  if (data && typeof data === 'object') {
+    CHECKLIST_TEMPLATES = data;
+    checklistTemplatesLoaded = true;
+  }
 }
 
 function renderAdminChecklistBoard(rows) {
@@ -580,7 +564,7 @@ function renderDrawerChecklist(cand) {
         };
         const rollbackDone = template.reduce((acc, t) => acc + (rollbackItems[t.id] ? 1 : 0), 0);
         setDrawerChecklistMeta(template.length, rollbackDone);
-        showActionError(e, 'Не вдалося зберегти чек-лист');
+        showActionError({ message: extractApiError(e, 'Не вдалося зберегти чек-лист') }, 'Не вдалося зберегти чек-лист');
       }
     });
 
@@ -631,7 +615,7 @@ function bindDrawer() {
         cand.status = prev;
         renderDrawerChecklist(cand);
         if (inList) inList.status = prev;
-        showActionError(e, 'Не вдалося змінити статус');
+        showActionError({ message: extractApiError(e, 'Не вдалося змінити статус') }, 'Не вдалося змінити статус');
         return;
       }
 
@@ -651,7 +635,7 @@ function bindDrawer() {
             }
             renderDrawerChecklist(cand);
             refreshCandidatesView();
-          } catch (err) { showActionError(err, 'Не вдалося скасувати'); }
+          } catch (err) { showActionError({ message: extractApiError(err, 'Не вдалося скасувати') }, 'Не вдалося скасувати'); }
         },
       );
       refreshCandidatesView();
@@ -826,6 +810,13 @@ function extractApiError(error, fallback) {
   if (!match) return message || fallback;
   try {
     const parsed = JSON.parse(match[1]);
+    if (parsed?.message === 'Checklist incomplete' && Array.isArray(parsed?.missingItems)) {
+      const items = parsed.missingItems.filter(Boolean);
+      if (items.length) {
+        return `Щоб змінити статус, завершіть чек-лист поточного етапу:\n- ${items.join('\n- ')}`;
+      }
+      return 'Щоб змінити статус, завершіть чек-лист поточного етапу.';
+    }
     if (typeof parsed?.message === 'string') return parsed.message;
     return message || fallback;
   } catch {
@@ -968,7 +959,7 @@ function renderCandidatesTable(candidates) {
         select.value = prev;
         select.className = `statusSelect status-${prev}`;
         cand.status = prev;
-        showActionError(e, 'Не вдалося змінити статус');
+        showActionError({ message: extractApiError(e, 'Не вдалося змінити статус') }, 'Не вдалося змінити статус');
         return;
       }
 
@@ -1315,7 +1306,7 @@ async function handleKanbanDrop(candId, prevStatus, nextStatus) {
   } catch (e) {
     cand.status = prevStatus;
     refreshCandidatesView();
-    showActionError(e, 'Не вдалося змінити статус');
+    showActionError({ message: extractApiError(e, 'Не вдалося змінити статус') }, 'Не вдалося змінити статус');
     return;
   }
 
@@ -1329,7 +1320,7 @@ async function handleKanbanDrop(candId, prevStatus, nextStatus) {
         });
         cand.status = prevStatus;
         refreshCandidatesView();
-      } catch (err) { showActionError(err, 'Не вдалося скасувати'); }
+      } catch (err) { showActionError({ message: extractApiError(err, 'Не вдалося скасувати') }, 'Не вдалося скасувати'); }
     },
   );
 }
@@ -1377,6 +1368,7 @@ function refreshCandidatesView() {
 
 async function loadCandidatesTable() {
   dashboardUser = await api('/auth/me');
+  await ensureChecklistTemplatesLoaded();
   const sublineEl = document.getElementById('subline');
   if (sublineEl) sublineEl.textContent = `Ви: ${dashboardUser.email} (${dashboardUser.role})`;
   

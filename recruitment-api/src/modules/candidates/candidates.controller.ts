@@ -51,6 +51,11 @@ export class CandidatesController {
     return this.candidatesService.getMotivationOverview(effectiveRecruiterId, period, date);
   }
 
+  @Get('checklist/template')
+  getChecklistTemplate() {
+    return this.candidatesService.getChecklistTemplate();
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string, @CurrentUser() user: JwtUser) {
     return this.candidatesService.findOne(id, user);

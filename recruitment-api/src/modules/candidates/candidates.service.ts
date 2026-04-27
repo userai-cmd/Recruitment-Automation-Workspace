@@ -5,6 +5,7 @@ import { ChangeStatusDto } from './dto/change-status.dto';
 import { UpdateCandidateDto } from './dto/update-candidate.dto';
 import { JwtUser } from '../../common/decorators/current-user.decorator';
 import { UpdateChecklistDto } from './dto/update-checklist.dto';
+import { CHECKLIST_REQUIRED_BY_STATUS } from './checklist-template';
 
 const STATUS_LABELS: Record<string, string> = {
   new: 'Новий',
@@ -17,33 +18,6 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 const STATUS_ORDER = ['new', 'contacted', 'interview', 'offer', 'hired', 'sb_failed', 'rejected'];
-const CHECKLIST_REQUIRED_BY_STATUS: Record<string, Array<{ id: string; label: string }>> = {
-  new: [
-    { id: 'profileFilled', label: "Заповнено ПІБ, телефон, позицію, місто, джерело" },
-    { id: 'duplicatesChecked', label: 'Перевірено дублікати в базі' },
-    { id: 'firstCommentAdded', label: 'Додано початковий коментар' },
-  ],
-  contacted: [
-    { id: 'firstContactDone', label: 'Проведено первинний контакт' },
-    { id: 'conditionsClarified', label: 'Уточнено графік/умови/очікування' },
-    { id: 'contactResultLogged', label: 'Зафіксовано результат контакту' },
-  ],
-  interview: [
-    { id: 'interviewScheduled', label: 'Узгоджено дату і час співбесіди' },
-    { id: 'instructionsSent', label: 'Надіслано інструкції кандидату' },
-    { id: 'feedbackLogged', label: 'Після співбесіди внесено фідбек' },
-  ],
-  offer: [
-    { id: 'offerTermsAgreed', label: 'Узгоджено умови оферу' },
-    { id: 'offerConfirmed', label: 'Кандидат підтвердив офер' },
-    { id: 'documentsDeadlineSet', label: 'Узгоджено дедлайн по документах' },
-  ],
-  hired: [
-    { id: 'docsReceived', label: 'Отримано пакет документів' },
-    { id: 'startDateConfirmed', label: 'Підтверджено дату виходу' },
-    { id: 'handoffCompleted', label: 'Передано в HR/оформлення' },
-  ],
-};
 const KPI_PERIODS = ['day', 'week', 'month', 'quarter', 'year'] as const;
 type KpiPeriod = (typeof KPI_PERIODS)[number];
 const REFERRAL_SOURCES = new Set(['рекомендація', 'referral', 'recommendation']);
@@ -53,6 +27,10 @@ const SB_FAILED_BONUS_UAH = 400;
 @Injectable()
 export class CandidatesService {
   constructor(private readonly prisma: PrismaService) {}
+
+  getChecklistTemplate() {
+    return CHECKLIST_REQUIRED_BY_STATUS;
+  }
 
   private parsePeriod(period?: string): KpiPeriod {
     if (period && KPI_PERIODS.includes(period as KpiPeriod)) {
