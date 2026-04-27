@@ -272,9 +272,38 @@ function formatDate(iso) {
   return d.toLocaleDateString('uk-UA');
 }
 
+function showCenteredNotice(message, title = 'Увага') {
+  const existing = document.getElementById('centerNoticeOverlay');
+  if (existing) existing.remove();
+
+  const overlay = document.createElement('div');
+  overlay.id = 'centerNoticeOverlay';
+  overlay.style.cssText =
+    'position:fixed;inset:0;background:rgba(3,10,22,.75);z-index:10000;display:flex;align-items:center;justify-content:center;padding:16px;';
+
+  const card = document.createElement('div');
+  card.style.cssText =
+    'width:min(520px,96vw);background:#0a1830;border:1px solid rgba(126,213,255,.35);border-radius:14px;padding:16px;color:#e8f4ff;box-shadow:0 24px 50px rgba(0,0,0,.45);';
+  card.innerHTML = `
+    <div style="font-size:18px;font-weight:900;margin-bottom:8px">${title}</div>
+    <div style="white-space:pre-wrap;line-height:1.45;color:#cfe8ff">${String(message || '')}</div>
+    <div style="display:flex;justify-content:flex-end;margin-top:14px">
+      <button id="centerNoticeOkBtn" type="button" style="padding:8px 14px;border:none;border-radius:10px;background:linear-gradient(180deg,rgba(40,167,255,.98),rgba(20,102,214,.96));color:#fff;font-weight:900;cursor:pointer">OK</button>
+    </div>
+  `;
+  overlay.appendChild(card);
+  document.body.appendChild(overlay);
+
+  const close = () => overlay.remove();
+  card.querySelector('#centerNoticeOkBtn')?.addEventListener('click', close);
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) close();
+  });
+}
+
 function showActionError(error, fallback = 'Операцію не виконано') {
   const message = String(error?.message || fallback);
-  alert(message);
+  showCenteredNotice(message, 'Дію не виконано');
 }
 
 /* ── UNDO SNACKBAR ─────────────────────────────────────────── */
